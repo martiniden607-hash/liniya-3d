@@ -1,0 +1,1402 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Линия ПЭТ 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#efefef; --surface:#ffffff; --surface-2:#f6f6f6; --text:#111214; --muted:#5a5d61;
+  --line:#d2d3d5; --line-strong:#8f9296; --accent:#0a8fae; --accent-weak:rgba(10,143,174,.10);
+  --btn:#ffffff; --btn-text:#111214; --btn-on:#111214; --btn-on-text:#ffffff;
+  --scene-bg:#e4e5e6; --floor:#d9dadb; --grid1:#b9bbbe; --grid2:#cacbcd;
+  --shadow:0 1px 6px rgba(0,0,0,.14);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141516; --surface:#1c1e20; --surface-2:#222426; --text:#ebeced; --muted:#a2a5a9;
+    --line:#35383b; --line-strong:#5f6368; --accent:#5ad2ea; --accent-weak:rgba(90,210,234,.13);
+    --btn:#1c1e20; --btn-text:#ebeced; --btn-on:#ebeced; --btn-on-text:#111214;
+    --scene-bg:#1e2022; --floor:#2a2c2f; --grid1:#45484c; --grid2:#36393c;
+    --shadow:0 1px 8px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141516; --surface:#1c1e20; --surface-2:#222426; --text:#ebeced; --muted:#a2a5a9;
+  --line:#35383b; --line-strong:#5f6368; --accent:#5ad2ea; --accent-weak:rgba(90,210,234,.13);
+  --btn:#1c1e20; --btn-text:#ebeced; --btn-on:#ebeced; --btn-on-text:#111214;
+  --scene-bg:#1e2022; --floor:#2a2c2f; --grid1:#45484c; --grid2:#36393c;
+  --shadow:0 1px 8px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Open Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:15px;line-height:1.45;overflow-x:hidden;-webkit-text-size-adjust:100%}
+button{font-family:inherit}
+.app{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 24px;max-width:100%}
+.top{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding-block:10px;border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:15px;white-space:nowrap}
+.brand span{font-weight:400;color:var(--muted)}
+.mtabs{display:flex;border:1px solid var(--line-strong);border-radius:4px;overflow:hidden;flex:1 1 300px;max-width:560px;min-width:0}
+.mtabs button{flex:1 1 0;min-width:0;border:0;border-right:1px solid var(--line-strong);background:var(--btn);color:var(--btn-text);font-size:13px;font-weight:600;padding-block:7px;padding-inline:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtabs button:last-child{border-right:0}
+.mtabs button[aria-selected="true"]{background:var(--btn-on);color:var(--btn-on-text)}
+.mtabs .s{display:none}
+.layout{display:block;margin-top:10px}
+.stage{position:relative;height:60vh;height:60svh;min-height:300px;background:var(--scene-bg);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
+.tools{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;z-index:5;pointer-events:none}
+.tools button{pointer-events:auto;font-size:12px;font-weight:600;padding-block:6px;padding-inline:10px;border:1px solid var(--line-strong);border-radius:4px;background:var(--btn);color:var(--btn-text);cursor:pointer;box-shadow:var(--shadow)}
+.tools button[aria-pressed="true"]{background:var(--btn-on);color:var(--btn-on-text);border-color:var(--btn-on)}
+.labels{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px;font-weight:600;line-height:1;color:#fff;text-shadow:0 0 2px #000,0 0 3px #000,0 0 5px rgba(0,0,0,.85);pointer-events:auto;cursor:pointer;will-change:transform;user-select:none}
+.lbl i{position:relative;flex:none;width:12px;height:12px;border:1.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.75),inset 0 0 0 1px rgba(0,0,0,.55)}
+.lbl i::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;background:#fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.6)}
+.lbl.flip{flex-direction:row-reverse}
+.lbl.sel{color:#7fe8ff}
+.lbl.sel i{border-color:#7fe8ff}
+.card{position:absolute;left:8px;bottom:8px;z-index:6;width:min(400px, calc(100% - 16px));max-height:56%;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--line-strong);border-radius:4px;padding-block:10px 12px;padding-inline:12px;box-shadow:var(--shadow)}
+.card h2{margin:0 28px 4px 0;font-size:15px;line-height:1.3}
+.card h2::before{content:"⊙ ";color:var(--accent)}
+.card p{margin:0;font-size:13.5px}
+.card .rel{margin-top:8px;padding-top:6px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.card .rel b{color:var(--text);font-weight:600}
+.card .rel ul{margin:4px 0 0;padding-left:18px}
+.card .x{position:absolute;top:5px;right:5px;width:26px;height:26px;border:1px solid var(--line);border-radius:3px;background:var(--btn);color:var(--btn-text);font-size:16px;line-height:1;cursor:pointer}
+.hint{position:absolute;right:8px;bottom:8px;z-index:4;font-size:11px;color:var(--muted);pointer-events:none;text-align:right}
+.err{position:absolute;inset:auto 8px 8px 8px;z-index:7;background:var(--surface);border:1px solid var(--line-strong);border-radius:4px;padding-block:8px;padding-inline:10px;font-size:13px}
+.panel{margin-top:12px;min-width:0}
+.mhead h1{font-size:18px;line-height:1.25;margin:0 0 4px}
+.mhead p{margin:0 0 10px;color:var(--muted);font-size:13.5px}
+.ptabs{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.ptabs button{font-size:12.5px;padding-block:5px;padding-inline:9px;border:1px solid var(--line);border-radius:3px;background:var(--btn);color:var(--btn-text);cursor:pointer}
+.ptabs button[aria-selected="true"]{background:var(--btn-on);color:var(--btn-on-text);border-color:var(--btn-on)}
+.pbody h3{font-size:14px;margin:14px 0 6px}
+.pbody h3:first-child{margin-top:4px}
+.pbody .note{color:var(--muted);font-size:13px}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;position:relative;padding-block:7px;padding-inline:32px 4px;border-top:1px solid var(--line);font-size:14px}
+ol.steps li:last-child{border-bottom:1px solid var(--line)}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:7px;width:22px;height:22px;border:1px solid var(--line-strong);border-radius:50%;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
+ol.steps li.hp{cursor:pointer}
+ol.steps li.hp:hover,ol.steps li.sel{background:var(--accent-weak)}
+.go{display:inline-block;margin-left:6px;padding:0 0 0 0;border:0;background:none;color:var(--accent);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px}
+.chip{border:1px solid var(--line);border-radius:3px;padding-block:3px;padding-inline:8px;font-size:12.5px;background:var(--btn);color:var(--btn-text);cursor:pointer}
+.chip.sel{border-color:var(--accent);background:var(--accent-weak)}
+.defect{border:1px solid var(--line);border-radius:4px;padding-block:8px;padding-inline:10px;margin:0 0 8px;background:var(--surface)}
+.defect dl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 10px;margin:0}
+.defect dt{font-size:12px;color:var(--muted);font-weight:600;padding-top:1px}
+.defect dd{margin:0;font-size:13.5px;min-width:0}
+.defect dd.what{font-weight:600}
+.defect.sel{border-color:var(--accent)}
+details.q{border-top:1px solid var(--line);padding-block:8px}
+details.q:last-child{border-bottom:1px solid var(--line)}
+details.q summary{cursor:pointer;font-weight:600;font-size:14px;list-style:none;padding-left:24px;position:relative}
+details.q summary::-webkit-details-marker{display:none}
+details.q summary::before{content:"+";position:absolute;left:0;top:0;width:16px;height:18px;border:1px solid var(--line-strong);border-radius:3px;text-align:center;font-weight:700;line-height:16px;font-size:13px}
+details.q[open] summary::before{content:"−"}
+details.q .a{margin:6px 0 0 24px;font-size:14px}
+@media (max-width:520px){
+  .mtabs .l{display:none}
+  .mtabs .s{display:inline}
+  .hint{display:none}
+}
+@media (min-width:900px){
+  .app{height:100%;display:flex;flex-direction:column;padding-block:0 12px}
+  .layout{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:60% minmax(0,40%);gap:0 16px;margin-top:12px}
+  .stage{height:auto;min-height:0}
+  .panel{margin-top:0;overflow-y:auto;min-height:0;padding-right:4px}
+}
+</style>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">Линия ПЭТ/ПП <span>· 3D-разбор оборудования</span></div>
+    <nav class="mtabs" id="mtabs" role="tablist" aria-label="Оборудование">
+      <button role="tab" data-m="line" aria-selected="true" aria-label="Линия листа"><span class="l">Линия листа</span><span class="s">Линия</span></button>
+      <button role="tab" data-m="vac" aria-selected="false" aria-label="Вакуумформовка"><span class="l">Вакуумформовка</span><span class="s">Вакуум</span></button>
+      <button role="tab" data-m="thermo" aria-selected="false" aria-label="Термоформовка"><span class="l">Термоформовка</span><span class="s">Термо</span></button>
+    </nav>
+  </header>
+  <main class="layout">
+    <section class="stage" id="stage" aria-label="3D-модель">
+      <div class="tools">
+        <button id="bRun" aria-pressed="false">Пуск</button>
+        <button id="bCut" aria-pressed="false">Разрез</button>
+        <button id="bLbl" aria-pressed="true">Подписи</button>
+        <button id="bHome">Общий вид</button>
+      </div>
+      <div class="labels" id="labels"></div>
+      <div class="card" id="card" hidden>
+        <button class="x" id="cardX" aria-label="Закрыть">×</button>
+        <h2 id="cardT"></h2>
+        <p id="cardP"></p>
+        <div class="rel" id="cardR" hidden></div>
+      </div>
+      <div class="hint" id="hint">Крутить — мышь или палец · зум — колесо или щипок · сдвиг — правая кнопка или два пальца</div>
+    </section>
+    <section class="panel" id="panel">
+      <div class="mhead"><h1 id="mTitle"></h1><p id="mShort"></p></div>
+      <nav class="ptabs" id="ptabs" role="tablist" aria-label="Разделы"></nav>
+      <div class="pbody" id="pbody"></div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+window.CONTENT = {
+  machines: [
+    {
+      id: "line",
+      title: "Линия листа ПЭТ/ПП",
+      short: "Экструзионная линия: из гранул и вторички ПЭТ или ПП делает лист («плёнку») 0,2–1,5 мм и мотает его в рулоны. Из этих рулонов потом формуют тортницы и стаканы.",
+      parts: [
+        { id: "dryer", name: "Сушилка-кристаллизатор", text: "Сушит ПЭТ перед плавкой: 4–6 часов при 150–170 °C сухим горячим воздухом (точка росы около −40 °C), до влажности не больше 0,005 %. Кристаллизатор не даёт хлопьям слипнуться. Влажный ПЭТ при плавлении разрушается: лист мутный, с пузырями, хрупкий. ПП обычно не сушат. Бывает и без сушилки: двухшнековый экструдер с вакуумной дегазацией — влагу отсасывает вакуум-насос." },
+        { id: "loader", name: "Вакуумный загрузчик", text: "Сам подаёт сырьё по трубе в бункер, когда уровень падает." },
+        { id: "hopper", name: "Бункер и дозатор", text: "Смешивает сырьё в заданных процентах: первичка, вторичка (флекс — дроблёные бутылки), своя дроблёнка, краситель-мастербатч." },
+        { id: "extruder", name: "Экструдер", text: "Мотор с редуктором крутит шнек в толстом цилиндре. Обороты шнека — это сколько килограммов расплава в час." },
+        { id: "heaters", name: "Зоны нагрева", text: "5–8 нагревателей-хомутов с вентиляторами. Ориентиры: ПЭТ примерно 260–285 °C, ПП примерно 210–250 °C, а точные цифры — в рецепте линии. У каждой зоны своя термопара (датчик) и своя уставка на пульте." },
+        { id: "screw", name: "Шнек", text: "Захватывает гранулы, сжимает и плавит их (нагреватели + трение) и давит расплав вперёд." },
+        { id: "screen", name: "Сеткосменщик (фильтр)", text: "Сетки ловят грязь и непроплав. Перед ним датчик давления: давление растёт — сетка забилась, пора менять." },
+        { id: "pump", name: "Насос расплава", text: "Шестерёнчатый насос даёт ровную подачу, чтобы толщина листа не «гуляла». Стоит не на всех линиях." },
+        { id: "die", name: "Плоская головка", text: "Растекает расплав на всю ширину и выпускает через узкую щель. Болтами губок выравнивают толщину по ширине. У головки свои зоны нагрева." },
+        { id: "rolls", name: "Валки (каландр)", text: "Три хромированных валка с водой внутри: калибруют толщину и охлаждают ленту. ПЭТ надо остудить быстро — иначе мутнеет. Поверхность зеркальная: только мягкая ткань, никакого железа." },
+        { id: "tcu", name: "Термостаты валков", text: "Гонят воду нужной температуры через валки. Для ПЭТ задача — быстро снять тепло, чтобы лист остался прозрачным (аморфным). Ниже ~100 °C ПЭТ не кристаллизуется, выше начинает белеть. Валки обычно держат в пределах примерно 20–80 °C, а точные цифры — в рецепте линии." },
+        { id: "conveyor", name: "Охлаждающий рольганг", text: "Лист дальше остывает на роликах." },
+        { id: "gauge", name: "Толщиномер", text: "Ездит поперёк листа и меряет толщину. Если его нет — меряют микрометром в 5–10 точках по ширине." },
+        { id: "edge", name: "Обрезка кромки", text: "Дисковые ножи срезают неровные края. Кромка идёт в дробилку." },
+        { id: "haul", name: "Тянущие валки", text: "Резиновые валки тянут лист. Тянут быстрее — лист тоньше." },
+        { id: "winder", name: "Намотчик", text: "Мотает лист в рулон. Два вала: рулон готов — лист режут и перекидывают на новый вал без остановки. Важно натяжение намотки." },
+        { id: "grinder", name: "Дробилка", text: "Мелет кромку и брак в крошку, крошка идёт обратно в бункер. ПЭТ-крошку тоже сушат." },
+        { id: "hmi", name: "Пульт", text: "Сенсорная панель: рецепты, температуры зон, обороты шнека, давление расплава, скорости, аварии." }
+      ],
+      sections: [
+        { id: "how", title: "Как работает", items: [
+          { text: "ПЭТ сушат и подают в бункер.", part: "dryer" },
+          { text: "Шнек плавит сырьё в цилиндре с нагревателями.", part: "screw" },
+          { text: "Фильтр задерживает грязь, насос выравнивает подачу.", part: "screen" },
+          { text: "Плоская головка делает из расплава широкую ленту.", part: "die" },
+          { text: "Холодные валки калибруют толщину и охлаждают ленту — получается лист.", part: "rolls" },
+          { text: "Ножи режут кромку, тянущие валки тянут, намотчик мотает рулон.", part: "winder" },
+          { text: "Кромка и брак — в дробилку и обратно в бункер.", part: "grinder" }
+        ]},
+        { id: "start", title: "Запуск", items: [
+          { text: "Осмотр: ограждения на месте, в зоне валков нет инструмента и тряпок, аварийные кнопки работают." },
+          { text: "Сушилку включают заранее: ПЭТ сушится 4–6 часов. Проверить температуру и точку росы.", part: "dryer" },
+          { text: "Включить воду: термостаты валков, охлаждение горловины и редуктора.", part: "tcu" },
+          { text: "Включить нагрев всех зон по рецепту: цилиндр, фильтр, насос, головка.", part: "heaters" },
+          { text: "Ждать выхода на температуру и ещё 30–60 минут «пропитки», чтобы застывший пластик внутри расплавился. Шнек на холодную НЕ крутить — сломается.", part: "extruder" },
+          { text: "Пустить шнек на малых оборотах. Следить за давлением расплава и нагрузкой мотора: резко растут — стоп, где-то холодно или забита сетка.", part: "hmi" },
+          { text: "Первый расплав тёмный, с нагаром — сливают в отход, пока не пойдёт чистый.", part: "die" },
+          { text: "Заправка: в перчатках завести ленту расплава в зазор валков, свести валки, протянуть лист через рольганг и тянущие валки до намотчика.", part: "rolls" },
+          { text: "Плавно поднимать обороты шнека и скорость валков вместе до рабочих.", part: "haul" },
+          { text: "Настроить толщину: зазор валков и болты губок. Замерить по ширине в 5–10 точках.", part: "die" },
+          { text: "Проверить лист: прозрачный, без пузырей, полос и чёрных точек. Годный — на намотку.", part: "winder" },
+          { text: "Записать параметры в журнал.", part: "hmi" }
+        ]},
+        { id: "setup", title: "Настройка", items: [
+          { text: "Температура зон: выше — расплав жиже и давление ниже, но риск пригара и жёлтого оттенка. Ниже — непроплав, растут давление и нагрузка.", part: "heaters" },
+          { text: "Обороты шнека — сколько кг в час. Больше оборотов при той же скорости валков — лист толще.", part: "extruder" },
+          { text: "Скорость валков и тянущих: быстрее — тоньше. Толщину держат парой «обороты шнека ↔ скорость валков».", part: "haul" },
+          { text: "Зазор валков калибрует лист. Перед зазором должен быть ровный небольшой «валик» расплава по всей ширине.", part: "rolls" },
+          { text: "Болты губок головки выравнивают толщину по ширине. Крутить понемногу и ждать пару минут.", part: "die" },
+          { text: "Температура воды в валках: прозрачность ПЭТ и ровность листа.", part: "tcu" },
+          { text: "Натяжение намотки: сильное тянет лист, слабое — рулон рыхлый и «съезжает».", part: "winder" },
+          { text: "Состав сырья: доля вторички и дроблёнки, краситель. Больше вторички — больше грязи и риск хрупкости.", part: "hopper" },
+          { text: "Главное правило: менять ОДИН параметр за раз и смотреть результат 3–5 минут." }
+        ]},
+        { id: "change", title: "Смена сырья и сетки", items: [
+          { text: "Сетку меняют по росту давления перед фильтром. На гидравлическом сменщике это быстро.", part: "screen" },
+          { text: "Смена цвета или материала: гонят новый материал или продувочный состав, пока лист не станет чистым. Переходный отход — отдельно.", part: "hopper" },
+          { text: "С ПЭТ на ПП: промыть и снизить температуры. С ПП на ПЭТ: поднять температуры, ПЭТ обязательно сухой.", part: "heaters" },
+          { text: "Смена толщины или ширины: новый рецепт, зазор валков, скорость, положение ножей кромки.", part: "rolls" }
+        ]},
+        { id: "service", title: "Обслуживание", items: [
+          { text: "Каждую смену: обход — утечки воды, масла, воздуха, посторонний шум и вибрация." },
+          { text: "Каждую смену: давление расплава, ток мотора, температуры зон сравнить с нормой и записать в журнал.", part: "hmi" },
+          { text: "Валки протирать только мягкой чистой тканью: царапина на хроме даёт полосу на каждом метре листа.", part: "rolls" },
+          { text: "Чистота: пыль, обрезки, рассыпанные гранулы. Смазка по карте смазки: подшипники, цепи, направляющие." },
+          { text: "По графику: сетки фильтра — по давлению.", part: "screen" },
+          { text: "Зона не греется: ток клещами, сопротивление нагревателя мультиметром (обрыв — бесконечность), термопару сравнить с соседней.", part: "heaters" },
+          { text: "Масло в редукторе: уровень и замена по моточасам.", part: "extruder" },
+          { text: "Ножи кромки: заточка и замена.", part: "edge" },
+          { text: "Термостаты: фильтры и накипь в воде.", part: "tcu" },
+          { text: "Сушилка: фильтры воздуха, осушитель.", part: "dryer" },
+          { text: "Раз в год (ППР): разобрать и почистить головку латунными скребками — сталью нельзя, губки поцарапаешь.", part: "die" },
+          { text: "ППР: износ шнека и цилиндра, подшипники валков, проверка датчиков давления.", part: "screw" },
+          { text: "Запчасти (сетки, нагреватели, термопары, ножи, ремни) держать в запасе и заказывать заранее, чтобы линия не стояла." }
+        ]},
+        { id: "stop", title: "Остановка", items: [
+          { text: "Короткая (до часа): снизить обороты, лист в отход, температуры держать." },
+          { text: "Длинная: перекрыть подачу сырья, выработать шнек до падения давления.", part: "hopper" },
+          { text: "ПЭТ не держат долго в горячем цилиндре без движения — желтеет и горит. Часто перед остановкой промывают ПП или продувочным составом.", part: "extruder" },
+          { text: "Остановить шнек, снизить или выключить нагрев.", part: "heaters" },
+          { text: "Развести и очистить валки. Воду выключить после остывания.", part: "rolls" },
+          { text: "Записать время и причину остановки." }
+        ]}
+      ],
+      defects: [
+        { what: "Лист мутный, белёсый (ПЭТ)", why: "Валки тёплые — ПЭТ медленно остывает и кристаллизуется. Или влажное сырьё.", fix: "Холоднее вода в валках, проверить сушилку и точку росы.", part: "tcu" },
+        { what: "Пузыри, «пена»", why: "Влага — плохая сушка. Подсос воздуха.", fix: "Сушка, загрузка, вакуум дегазации.", part: "dryer" },
+        { what: "Жёлтый оттенок, запах гари", why: "Перегрев, расплав долго стоит в горячем цилиндре.", fix: "Снизить температуры, не держать ПЭТ без движения.", part: "heaters" },
+        { what: "Чёрные точки", why: "Нагар в шнеке или головке, грязная вторичка.", fix: "Сменить сетку, почистить, меньше вторички.", part: "screen" },
+        { what: "Полосы вдоль листа", why: "Царапина или нагар на губках головки, грязь на валках.", fix: "Чистить губки латунью, протереть валки.", part: "die" },
+        { what: "Толщина разная по ширине", why: "Болты губок, неровный нагрев головки.", fix: "Подстроить болты, проверить зоны головки.", part: "die" },
+        { what: "Толщина «гуляет» по длине", why: "Неровная подача, пульсация, проскальзывают тянущие.", fix: "Насос расплава, ровная загрузка, прижим тянущих.", part: "pump" },
+        { what: "Лист хрупкий, ломается", why: "Влажный ПЭТ разрушился при плавке, много вторички.", fix: "Сушка, больше первички.", part: "dryer" },
+        { what: "Рулон рыхлый, «съезжает»", why: "Слабое или неровное натяжение.", fix: "Настроить натяжение намотки.", part: "winder" },
+        { what: "Давление резко растёт", why: "Забита сетка или холодная зона.", fix: "Сменить сетку, проверить нагрев.", part: "screen" }
+      ]
+    },
+    {
+      id: "vac",
+      title: "Вакуум-формовочная машина",
+      short: "Делает из рулона ПЭТ-листа прозрачные купола тортниц и кондитерские контейнеры. Лист греют и прижимают к форме вакуумом, потом вырубают и складывают в стопки.",
+      parts: [
+        { id: "unwinder", name: "Размотчик", text: "Ось с рулоном ПЭТ-листа 0,2–0,8 мм. Тормоз держит натяжение." },
+        { id: "chains", name: "Цепи с шипами", text: "Держат лист за края и подают его шагами. Шаг равен длине формы." },
+        { id: "heater_top", name: "Верхние нагреватели", text: "Керамические или кварцевые, каждый задаётся в процентах. Вместе с нижними греют ПЭТ-лист примерно до 120–150 °C (смотреть техкарту листа)." },
+        { id: "heater_bottom", name: "Нижние нагреватели", text: "Греют лист снизу, чтобы он прогрелся насквозь и ровно." },
+        { id: "mould", name: "Форма", text: "Алюминиевая, с куполами под тортницы. В ней сотни маленьких отверстий для вакуума и каналы для воды. Купол — «позитивная» форма: лист натягивается на неё сверху." },
+        { id: "table", name: "Формовочный стол", text: "Поднимает форму в нагретый лист и опускает после охлаждения." },
+        { id: "vacuum", name: "Вакуум-насос и ресивер", text: "Ресивер заранее копит вакуум, чтобы лист присосался за доли секунды. Вакуум примерно −0,8…−0,9 бар." },
+        { id: "cooling", name: "Охлаждение", text: "Вентиляторы сверху и вода в форме быстро остужают изделие." },
+        { id: "cutter", name: "Вырубной пресс", text: "Нож из стальной ленты вырезает изделия из листа по контуру." },
+        { id: "stacker", name: "Укладчик", text: "Собирает купола в стопки и считает штуки." },
+        { id: "skeleton", name: "Скелет (отход)", text: "Остаток листа с дырками наматывают и отправляют в дробилку." },
+        { id: "hmi", name: "Пульт", text: "Рецепт изделия: нагрев по зонам в %, время нагрева, момент и время вакуума, охлаждение, сдув, шаг подачи, скорость." }
+      ],
+      sections: [
+        { id: "how", title: "Как работает", items: [
+          { text: "Цепи берут лист с рулона и шагом подают его в нагрев.", part: "chains" },
+          { text: "Нагреватели сверху и снизу делают лист мягким.", part: "heater_top" },
+          { text: "Лист приходит на форму, стол поднимает форму в лист.", part: "table" },
+          { text: "Открывается вакуум: воздух уходит через отверстия формы, лист плотно облегает купола.", part: "vacuum" },
+          { text: "Вода в форме и вентиляторы охлаждают — 2–4 секунды.", part: "cooling" },
+          { text: "Короткий «сдув» воздухом отрывает изделие, стол опускается.", part: "mould" },
+          { text: "Лист с куполами едет на вырубной пресс, нож вырезает изделия.", part: "cutter" },
+          { text: "Укладчик собирает стопки, скелет уходит в отход.", part: "stacker" }
+        ]},
+        { id: "start", title: "Запуск", items: [
+          { text: "Проверить: стоит нужная форма и нож под это изделие, всё закреплено.", part: "mould" },
+          { text: "Включить воздух (6 бар в сети), воду формы, вакуум-насос. Если насос масляный — проверить масло.", part: "vacuum" },
+          { text: "Поставить рулон, заправить лист в цепи ровно по центру, шипы держат края.", part: "unwinder" },
+          { text: "Включить нагреватели по рецепту и прогреть 10–20 минут.", part: "heater_top" },
+          { text: "Ручной режим: 1–2 цикла по шагу, посмотреть изделие.", part: "hmi" },
+          { text: "Подстроить нагрев, время, вакуум. Проверить, что нож режет ровно по контуру.", part: "cutter" },
+          { text: "Автомат. Первые изделия на проверку: прозрачные, углы чёткие, нет складок, крышка закрывается на дно.", part: "stacker" },
+          { text: "Счётчик и параметры — в журнал.", part: "hmi" }
+        ]},
+        { id: "setup", title: "Настройка", items: [
+          { text: "Нагрев по зонам (%): мало — не оформляются углы и рисунок, ПЭТ белеет на углах от перетяжки. Много — лист провисает, складки, тонкие места, мутность.", part: "heater_top" },
+          { text: "Края и центр греют по-разному: края листа остывают быстрее.", part: "heater_bottom" },
+          { text: "Время нагрева задаёт скорость: дольше греем — меньше штук в минуту." },
+          { text: "Момент вакуума: включили поздно — лист успел остыть и плохо оформляется.", part: "vacuum" },
+          { text: "Время охлаждения: мало — изделие ведёт, много — теряем производительность.", part: "cooling" },
+          { text: "Сдув: чтобы изделие снималось с формы без вмятин.", part: "mould" },
+          { text: "Шаг подачи должен совпадать с формой и ножом.", part: "chains" },
+          { text: "Нож: высота и давление — иначе заусенцы или недорез.", part: "cutter" },
+          { text: "Менять одно за раз и смотреть 5–10 циклов." }
+        ]},
+        { id: "change", title: "Смена формы", items: [
+          { text: "Остановить, отвести или выключить нагреватели, перекрыть вакуум и воздух, повесить табличку «не включать».", part: "hmi" },
+          { text: "Отсоединить шланги воды и вакуума, открутить и снять форму. Она тяжёлая — вдвоём или талью.", part: "mould" },
+          { text: "Почистить стол, поставить новую форму по упорам, закрепить, подключить шланги, проверить утечки.", part: "table" },
+          { text: "Поставить нож под это изделие и выставить его по контуру.", part: "cutter" },
+          { text: "Загрузить рецепт, сделать пробные циклы, подстроить.", part: "hmi" }
+        ]},
+        { id: "service", title: "Обслуживание", items: [
+          { text: "Каждую смену: почистить форму и продуть отверстия вакуума. Они забиваются, и изделие перестаёт оформляться.", part: "mould" },
+          { text: "Цепи: смазка, натяжение, целые шипы.", part: "chains" },
+          { text: "Нагреватели: сгоревший элемент видно по пятну на изделии — заменить.", part: "heater_top" },
+          { text: "Воздух: сливать конденсат из ресивера и фильтров. Вакуум-насос: масло и фильтры по графику.", part: "vacuum" },
+          { text: "Ножи: заточка или замена по графику.", part: "cutter" },
+          { text: "Направляющие стола — смазать. Датчики и концевики — проверить.", part: "table" },
+          { text: "Утечки воды и воздуха, записи в журнал." }
+        ]},
+        { id: "stop", title: "Остановка", items: [
+          { text: "Остановить подачу и отвести нагреватели — иначе лист над ними сгорит.", part: "heater_top" },
+          { text: "Выключить вакуум, воду, воздух. Очистить форму.", part: "vacuum" },
+          { text: "Обрезки и брак — в дробилку.", part: "skeleton" }
+        ]}
+      ],
+      defects: [
+        { what: "Углы и рисунок нечёткие", why: "Мало нагрева или вакуума, забиты отверстия формы.", fix: "Добавить нагрев, проверить насос, ресивер и шланги, продуть отверстия.", part: "mould" },
+        { what: "Складки, «паутина» в углах", why: "Перегрев, лист провис, лишний материал.", fix: "Убавить нагрев, поправить зоны.", part: "heater_top" },
+        { what: "ПЭТ побелел на углах", why: "Лист недогрет и перетянут: белеет от вытяжки, бывают микротрещины. Острые углы формы.", fix: "Чуть добавить нагрев, греть ровнее, проверить радиусы формы.", part: "heater_top" },
+        { what: "ПЭТ мутный по всей площади", why: "Перегрев или слишком долгий нагрев: ПЭТ начал кристаллизоваться.", fix: "Убавить нагрев или время нагрева.", part: "heater_bottom" },
+        { what: "Тонкие углы, дыры", why: "Перегрев, глубокая вытяжка, тонкий лист.", fix: "Меньше нагрев, проверить толщину листа.", part: "mould" },
+        { what: "Изделие ведёт, деформируется", why: "Мало охлаждения, тёплая вода.", fix: "Дольше охлаждение, проверить воду.", part: "cooling" },
+        { what: "Заусенцы, недорез", why: "Нож тупой или не выставлен.", fix: "Заточить, выставить по контуру.", part: "cutter" },
+        { what: "Пятна, следы на изделии", why: "Грязная форма, капли воды.", fix: "Почистить форму.", part: "mould" },
+        { what: "Одно и то же пятно на каждом изделии", why: "Сгорел нагреватель.", fix: "Заменить элемент.", part: "heater_bottom" }
+      ]
+    },
+    {
+      id: "thermo",
+      title: "Термоформовочная машина",
+      short: "Для стаканов и контейнеров из ПП: сжатый воздух сверху и вакуум снизу, пуансоны и наклонная форма, которая сама вырубает и выталкивает стаканы.",
+      parts: [
+        { id: "unwinder", name: "Размотчик", text: "Рулон ПП- или ПС-листа." },
+        { id: "chains", name: "Цепи", text: "Подают лист шагами." },
+        { id: "heaters", name: "Нагреватели", text: "ПП греют сильнее, примерно до 150–170 °C, а окно у него узкое, около 10 °C: чуть горячее — провис и слипание, чуть холоднее — не формуется." },
+        { id: "plug", name: "Пуансоны", text: "Вдавливают лист в гнёзда, чтобы стенки стакана вытянулись равномерно и дно не было тонким." },
+        { id: "mould_tilt", name: "Наклонная форма", text: "Формует и вырубает стакан прямо в форме, потом наклоняется и выталкивает стаканы в укладчик." },
+        { id: "air", name: "Сжатый воздух", text: "4–6 бар сверху прижимают лист к холодной форме — стенки и рисунок чётче, чем при одном вакууме." },
+        { id: "stacker", name: "Укладчик", text: "Собирает стаканы в стопки по 50–100 штук." },
+        { id: "hmi", name: "Пульт", text: "Нагрев, ход и скорость пуансона, задержки, давление воздуха, вакуум, охлаждение, скорость." }
+      ],
+      sections: [
+        { id: "how", title: "Как работает", items: [
+          { text: "Лист с рулона подаётся шагами в нагрев.", part: "chains" },
+          { text: "Нагретый лист приходит между формой и пуансонами.", part: "heaters" },
+          { text: "Пуансоны вдавливают лист в гнёзда.", part: "plug" },
+          { text: "Сжатый воздух сверху и вакуум снизу прижимают лист к холодной форме.", part: "air" },
+          { text: "Стакан остывает, нож в форме отрезает его от листа.", part: "mould_tilt" },
+          { text: "Форма наклоняется и выталкивает стаканы в укладчик.", part: "stacker" }
+        ]},
+        { id: "start", title: "Запуск", items: [
+          { text: "Форма и пуансоны под изделие, воздух 6 бар, вода, вакуум.", part: "air" },
+          { text: "Заправить лист, прогреть нагреватели по рецепту.", part: "heaters" },
+          { text: "1–2 цикла вручную. Проверить стакан: стенки, дно, борт, вес.", part: "plug" },
+          { text: "Автомат, следить за стопками и счётчиком.", part: "stacker" }
+        ]},
+        { id: "setup", title: "Настройка", items: [
+          { text: "Нагрев: у ПП узкое окно — менять по 1–2 %.", part: "heaters" },
+          { text: "Ход, скорость и задержка пуансона — для ровной стенки и дна.", part: "plug" },
+          { text: "Давление и время воздуха — для чёткости.", part: "air" },
+          { text: "Охлаждение — чтобы стакан не вело.", part: "mould_tilt" },
+          { text: "Нож в форме — чистый рез без «бахромы».", part: "mould_tilt" }
+        ]},
+        { id: "change", title: "Смена формы", items: [
+          { text: "Остановить, обесточить, сбросить давление воздуха, повесить табличку.", part: "hmi" },
+          { text: "Снять пуансоны и форму, поставить новые, подключить воду и воздух.", part: "mould_tilt" },
+          { text: "Выставить механизм наклона и укладчик под новый стакан, пробные циклы.", part: "stacker" }
+        ]},
+        { id: "service", title: "Обслуживание", items: [
+          { text: "Пневмоцилиндры и клапаны: утечки, уплотнения.", part: "air" },
+          { text: "Механизм наклона: смазка, люфты.", part: "mould_tilt" },
+          { text: "Ножи формы: заточка.", part: "mould_tilt" },
+          { text: "Пуансоны: износ, налипание.", part: "plug" }
+        ]},
+        { id: "stop", title: "Остановка", items: [
+          { text: "Остановить подачу, отвести нагреватели, сбросить воздух, очистить форму.", part: "heaters" }
+        ]}
+      ],
+      defects: [
+        { what: "Тонкое дно, стакан рвётся", why: "Пуансон настроен не так, перегрев.", fix: "Ход и задержка пуансона, меньше нагрев.", part: "plug" },
+        { what: "Стенка разной толщины", why: "Неровный нагрев, пуансон не по центру.", fix: "Зоны нагрева, центровка.", part: "heaters" },
+        { what: "Борт не оформился", why: "Мало воздуха или нагрева.", fix: "Давление воздуха, нагрев.", part: "air" },
+        { what: "Стаканы слипаются в стопке", why: "Мало охлаждения, рез с «бахромой».", fix: "Охлаждение, заточить нож.", part: "stacker" }
+      ]
+    }
+  ],
+  questions: [
+    { q: "Расскажите о себе. Почему к нам?", a: "Я технарь: работаю с измерительной техникой, дронами, чертежами и сложными программами, привык разбираться, почему что-то не работает. Живу рядом. Хочу освоить линию и стать наладчиком." },
+    { q: "Что такое экструзия?", a: "Шнек в нагретом цилиндре плавит гранулы и непрерывно выдавливает расплав через головку. У вас — через плоскую головку в лист." },
+    { q: "Зачем сушить ПЭТ?", a: "ПЭТ впитывает влагу, и при плавлении вода его разрушает: лист мутный, с пузырями, хрупкий. Сушат 4–6 часов при 150–170 °C сухим воздухом, до влажности не больше 0,005 %." },
+    { q: "Почему ПЭТ-лист мутнеет?", a: "Если он остывает медленно, то кристаллизуется и белеет — его надо быстро охладить на валках. Ещё одна причина — влажное сырьё." },
+    { q: "Чем вакуумная формовка отличается от пневмоформовки?", a: "В вакуумной лист прижимает только вакуум, это до одной атмосферы — для тонких изделий вроде тортниц. В пневмо ещё и сжатый воздух 4–6 бар сверху: стенки и рисунок чётче, так делают стаканы." },
+    { q: "Чем ПП отличается от ПЭТ?", a: "ПЭТ прозрачный и жёсткий, его сушат и плавят примерно при 260–285 °C. ПП мутноватый, гибкий, держит горячее, плавится ниже. Формовать ПП сложнее: окно температуры узкое, около 10 °C." },
+    { q: "Не знаете точный ответ по цифрам — что скажете?", a: "«Посмотрю по паспорту машины и техкарте сырья». Для механика это нормальный честный ответ." },
+    { q: "На листе чёрные точки — что будете делать?", a: "Это нагар или грязь. Сменить сетку, проверить вторичку, при необходимости чистить головку и шнек." },
+    { q: "Тортница плохо оформляется в углах — что проверите?", a: "Нагрев в этих зонах, вакуум (насос, ресивер, шланги), не забиты ли отверстия формы, толщину листа." },
+    { q: "Как поменять форму?", a: "Остановить, обесточить, перекрыть воздух и вакуум, повесить табличку. Снять шланги и форму, почистить стол, поставить новую по упорам, подключить, проверить утечки, выставить нож, загрузить рецепт, сделать пробные циклы." },
+    { q: "Что такое ТО и ППР?", a: "ТО — ежесменный осмотр, чистка, смазка, журнал. ППР — планово-предупредительный ремонт: не ждать поломки, а по графику менять сетки, масло, ножи, проверять нагреватели и подшипники." },
+    { q: "Зона экструдера не греется — что делать?", a: "Посмотреть ошибку на пульте. Клещами померить ток зоны, мультиметром — сопротивление нагревателя (обрыв — бесконечность). Сравнить термопару с соседней зоной, проверить предохранитель и реле." },
+    { q: "Давление расплава растёт — почему?", a: "Забивается сетка или где-то холодная зона. Сменить сетку, проверить нагрев." },
+    { q: "Что такое мастербатч, флекс, дроблёнка?", a: "Мастербатч — гранулы-краситель. Флекс — дроблёные ПЭТ-бутылки, вторичное сырьё. Дроблёнка — свои отходы, перемолотые в дробилке." },
+    { q: "Техника безопасности?", a: "Перед ремонтом отключить и заблокировать: табличка или замок, сбросить давление воздуха. К валкам и формам на ходу не лезть. Расплав 200–280 °C — перчатки и очки. Знать, где аварийные кнопки." },
+    { q: "Готовы к сменам? Сколько хотите получать?", a: "Готов учиться и работать по графику. На обучении — как у вас принято, дальше по результату." }
+  ],
+  safety: [
+    "Перед ремонтом и чисткой: остановить, обесточить, перекрыть воздух и вакуум, повесить табличку или замок.",
+    "Расплав и головка 200–280 °C: работать только в перчатках и очках. При пуске не стоять напротив головки.",
+    "Валки и цепи затягивают: рукава застёгнуты, без шарфа, волосы убраны, руками на ходу не лезть.",
+    "Ножи вырубки и кромки острые: менять в перчатках и только на остановленной машине.",
+    "Сжатый воздух 6 бар и вакуум: перед разборкой сбросить давление.",
+    "Шнек не крутить на холодном цилиндре.",
+    "Знать, где аварийные кнопки и огнетушитель.",
+    "Шум — беруши. У дробилки пыль и осколки — очки."
+  ]
+};
+
+</script>
+<script>
+(function(){
+'use strict';
+/* ===================== UI: data + panel ===================== */
+const C = (window.CONTENT && Array.isArray(window.CONTENT.machines)) ? window.CONTENT : {machines:[], questions:[], safety:[]};
+const reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MIDS = ['line','vac','thermo'];
+const DEF = {
+  line:{title:'Линия листа ПЭТ/ПП', names:{dryer:'Сушилка',loader:'Вакуумный загрузчик',hopper:'Бункер',extruder:'Экструдер',heaters:'Зоны нагрева',screw:'Шнек',screen:'Фильтр расплава',pump:'Насос расплава',die:'Плоскощелевая головка',rolls:'Три валка (каландр)',tcu:'Термостаты воды',conveyor:'Рольганг охлаждения',gauge:'Толщиномер',edge:'Обрезка кромки',haul:'Тянущие валки',winder:'Намотчик',grinder:'Дробилка кромки',hmi:'Пульт'}},
+  vac:{title:'Вакуумформовочный автомат', names:{unwinder:'Размотчик',chains:'Цепи с иглами',heater_top:'Верхний нагреватель',heater_bottom:'Нижний нагреватель',mould:'Форма (пуансоны)',table:'Формовочный стол',vacuum:'Вакуум-насос и ресивер',cooling:'Обдув (вентиляторы)',cutter:'Вырубной пресс',stacker:'Укладчик',skeleton:'Намотка отхода',hmi:'Пульт'}},
+  thermo:{title:'Термоформовочный автомат (стаканы ПП)', names:{unwinder:'Размотчик',chains:'Цепи с иглами',heaters:'Нагреватели',plug:'Подформовщики',mould_tilt:'Опрокидывающаяся форма',air:'Сжатый воздух',stacker:'Укладчик стаканов',hmi:'Пульт'}}
+};
+const TABS = [['how','Как работает'],['start','Запуск'],['setup','Настройка'],['change','Смена формы'],['service','Обслуживание'],['defects','Брак'],['questions','Вопросы'],['safety','Безопасность']];
+const S = {m:'line', tab:'how', sel:null, running:!reduceMotion, cut:false, labels:true};
+try { const t = localStorage.getItem('chaif3d.tab'); if (t && TABS.some(x => x[0] === t)) S.tab = t; } catch(e) {}
+
+function mc(mid){ return (C.machines || []).find(m => m && m.id === mid) || {}; }
+function partIds(mid){ return Object.keys(DEF[mid].names); }
+function partName(mid, pid){ const p = (mc(mid).parts || []).find(x => x.id === pid); return (p && p.name) || DEF[mid].names[pid] || pid; }
+function partText(mid, pid){ const p = (mc(mid).parts || []).find(x => x.id === pid); return (p && p.text) || ''; }
+function section(mid, sid){ return (mc(mid).sections || []).find(s => s && s.id === sid); }
+
+function renderHead(){
+  const m = mc(S.m);
+  $('mTitle').textContent = m.title || DEF[S.m].title;
+  $('mShort').textContent = m.short || '';
+  document.querySelectorAll('#mtabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.m === S.m)));
+}
+function renderTabs(){
+  $('ptabs').innerHTML = TABS.map(t => '<button role="tab" data-tab="' + t[0] + '" aria-selected="' + (t[0] === S.tab) + '">' + t[1] + '</button>').join('');
+}
+function stepsHTML(mid, sec){
+  if (!sec || !Array.isArray(sec.items) || !sec.items.length) return '<p class="note">Для этой машины пункт пока не заполнен.</p>';
+  return '<ol class="steps">' + sec.items.map(it => {
+    const txt = typeof it === 'string' ? it : (it && it.text) || '';
+    const pid = it && it.part && DEF[mid].names[it.part] ? it.part : null;
+    return pid ? '<li class="hp" data-part="' + pid + '">' + esc(txt) + ' <button class="go" data-part="' + pid + '">⊙ ' + esc(partName(mid, pid)) + '</button></li>'
+               : '<li>' + esc(txt) + '</li>';
+  }).join('') + '</ol>';
+}
+function secBlock(mid, sid, fallbackTitle){
+  const s = section(mid, sid);
+  return '<h3>' + esc((s && s.title) || fallbackTitle) + '</h3>' + stepsHTML(mid, s);
+}
+function renderBody(){
+  const mid = S.m, m = mc(mid), b = $('pbody');
+  let h = '';
+  if (S.tab === 'how'){
+    h += '<h3>Узлы — нажмите, чтобы показать на модели</h3><div class="chips">' +
+      partIds(mid).map(pid => '<button class="chip" data-part="' + pid + '">' + esc(partName(mid, pid)) + '</button>').join('') + '</div>';
+    h += secBlock(mid, 'how', 'Как работает');
+  } else if (S.tab === 'start'){
+    h += secBlock(mid, 'start', 'Запуск');
+    if (section(mid, 'stop')) h += secBlock(mid, 'stop', 'Остановка');
+  } else if (S.tab === 'setup'){ h += secBlock(mid, 'setup', 'Настройка');
+  } else if (S.tab === 'change'){ h += secBlock(mid, 'change', 'Смена формы');
+  } else if (S.tab === 'service'){ h += secBlock(mid, 'service', 'Обслуживание');
+  } else if (S.tab === 'defects'){
+    const d = Array.isArray(m.defects) ? m.defects : [];
+    h += '<h3>Брак: что видно → почему → что делать</h3>';
+    h += d.length ? d.map(x => {
+      const pid = x.part && DEF[mid].names[x.part] ? x.part : null;
+      return '<div class="defect"' + (pid ? ' data-dpart="' + pid + '"' : '') + '><dl>' +
+        '<dt>Что видно</dt><dd class="what">' + esc(x.what) + '</dd>' +
+        '<dt>Почему</dt><dd>' + esc(x.why) + '</dd>' +
+        '<dt>Что делать</dt><dd>' + esc(x.fix) + (pid ? ' <button class="go" data-part="' + pid + '">⊙ ' + esc(partName(mid, pid)) + '</button>' : '') + '</dd>' +
+        '</dl></div>';
+    }).join('') : '<p class="note">Пока не заполнено.</p>';
+  } else if (S.tab === 'questions'){
+    const q = Array.isArray(C.questions) ? C.questions : [];
+    h += '<h3>Что могут спросить на собеседовании (нажмите — откроется ответ)</h3>';
+    h += q.length ? q.map(x => '<details class="q"><summary>' + esc(x.q) + '</summary><div class="a">' + esc(x.a) + '</div></details>').join('') : '<p class="note">Пока не заполнено.</p>';
+  } else if (S.tab === 'safety'){
+    const s = Array.isArray(C.safety) ? C.safety : [];
+    h += '<h3>Безопасность</h3>';
+    h += s.length ? '<ol class="steps">' + s.map(x => '<li>' + esc(typeof x === 'string' ? x : (x && x.text) || '') + '</li>').join('') + '</ol>' : '<p class="note">Пока не заполнено.</p>';
+  }
+  b.innerHTML = h;
+  markPanelSel();
+}
+function markPanelSel(){
+  const pid = S.sel;
+  document.querySelectorAll('#pbody [data-part]').forEach(el => {
+    if (el.classList.contains('go')) return;
+    el.classList.toggle('sel', !!pid && el.dataset.part === pid);
+  });
+  document.querySelectorAll('#pbody [data-dpart]').forEach(el => el.classList.toggle('sel', !!pid && el.dataset.dpart === pid));
+}
+function showCard(pid){
+  const card = $('card');
+  if (!pid){ card.hidden = true; return; }
+  const mid = S.m;
+  $('cardT').textContent = partName(mid, pid);
+  $('cardP').textContent = partText(mid, pid) || 'Описание узла см. в разделах справа.';
+  const d = (mc(mid).defects || []).filter(x => x && x.part === pid);
+  const r = $('cardR');
+  if (d.length){
+    r.innerHTML = '<b>Брак, связанный с узлом:</b><ul>' + d.slice(0, 5).map(x => '<li>' + esc(x.what) + '</li>').join('') + '</ul>';
+    r.hidden = false;
+  } else { r.innerHTML = ''; r.hidden = true; }
+  card.hidden = false;
+  card.scrollTop = 0;
+}
+function setTab(t){
+  S.tab = t;
+  try { localStorage.setItem('chaif3d.tab', t); } catch(e) {}
+  renderTabs(); renderBody();
+}
+function bindUI(){
+  $('mtabs').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (b) setMachine(b.dataset.m); });
+  $('ptabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b) setTab(b.dataset.tab); });
+  $('pbody').addEventListener('click', e => {
+    const el = e.target.closest('[data-part]');
+    if (el && $('pbody').contains(el)) { selectPart(el.dataset.part, true); return; }
+    const d = e.target.closest('[data-dpart]');
+    if (d) selectPart(d.dataset.dpart, true);
+  });
+  $('cardX').addEventListener('click', () => selectPart(null));
+  $('bRun').addEventListener('click', () => { S.running = !S.running; syncTools(); });
+  $('bCut').addEventListener('click', () => { S.cut = !S.cut; applyCut(); syncTools(); });
+  $('bLbl').addEventListener('click', () => { S.labels = !S.labels; $('labels').hidden = !S.labels; syncTools(); });
+  $('bHome').addEventListener('click', () => { selectPart(null); flyHome(); });
+}
+function syncTools(){
+  $('bRun').textContent = S.running ? 'Стоп' : 'Пуск';
+  $('bRun').setAttribute('aria-pressed', String(S.running));
+  $('bCut').setAttribute('aria-pressed', String(S.cut));
+  $('bLbl').setAttribute('aria-pressed', String(S.labels));
+}
+/* ===================== 3D core ===================== */
+let renderer, scene, camera, controls, sun, floorMat, grid;
+const MACH = {};
+const OFFS = {line:0, vac:13.6, thermo:24.6};
+const isSmall = Math.min(window.innerWidth, window.innerHeight) < 600;
+let HL = null;
+const M = {};
+
+function cssVar(n, d){ const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v || d; }
+function std(c, met, rou, extra){ return new THREE.MeshStandardMaterial(Object.assign({color:c, metalness:met, roughness:rou}, extra || {})); }
+function add(parent, geo, mat, x, y, z, noShadow){
+  const m = new THREE.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0);
+  if (!noShadow){ m.castShadow = true; m.receiveShadow = true; }
+  parent.add(m); return m;
+}
+function B(p, w, h, d, mat, x, y, z){ return add(p, new THREE.BoxGeometry(w, h, d), mat, x, y, z); }
+function Cy(p, r1, r2, h, mat, x, y, z, axis, seg, open){
+  const g = new THREE.CylinderGeometry(r1, r2, h, seg || 24, 1, !!open);
+  if (axis === 'x') g.rotateZ(Math.PI / 2); else if (axis === 'z') g.rotateX(Math.PI / 2);
+  return add(p, g, mat, x, y, z);
+}
+function T(p, pts, r, mat, seg){
+  const c = new THREE.CatmullRomCurve3(pts.map(q => new THREE.Vector3(q[0], q[1], q[2])));
+  return add(p, new THREE.TubeGeometry(c, seg || 40, r, 8, false), mat, 0, 0, 0);
+}
+function grp(p, x, y, z){ const g = new THREE.Group(); g.position.set(x || 0, y || 0, z || 0); p.add(g); return g; }
+function casing(m){ m.userData.casing = true; return m; }
+function legs(p, xs, zs, h, mat, s){ s = s || 0.06; xs.forEach(x => zs.forEach(z => B(p, s, h, s, mat, x, h / 2, z))); }
+function canvasTex(w, h, draw){
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+function ribbonGeo(pts, w, uScale){
+  const n = pts.length, pos = new Float32Array(n * 6), uv = new Float32Array(n * 4), idx = [];
+  let L = 0;
+  for (let i = 0; i < n; i++){
+    if (i) L += Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]);
+    const u = L / uScale;
+    pos.set([pts[i][0], pts[i][1], -w / 2, pts[i][0], pts[i][1], w / 2], i * 6);
+    uv.set([u, 0, u, 1], i * 4);
+    if (i < n - 1){ const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+function arcPts(cx, cy, r, a0, a1, n){ const o = []; for (let i = 0; i <= n; i++){ const a = a0 + (a1 - a0) * i / n; o.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } return o; }
+function sheetTexture(){
+  const t = canvasTex(256, 64, (g, w, h) => {
+    g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(105,150,168,.55)'; g.lineWidth = 3;
+    for (let x = -64; x < w + 64; x += 64){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 34, h); g.stroke(); }
+    g.fillStyle = 'rgba(105,150,168,.45)'; g.fillRect(0, 0, w, 3); g.fillRect(0, h - 3, w, 3);
+  });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+function holesTexture(us, vs, ru, rv){
+  const t = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.fillStyle = '#000';
+    us.forEach(u => vs.forEach(v => { g.beginPath(); g.ellipse(u * w, v * h, ru * w, rv * h, 0, 0, Math.PI * 2); g.fill(); }));
+  });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+function heaterTexture(){
+  return canvasTex(256, 128, (g, w, h) => {
+    g.fillStyle = '#2a0d05'; g.fillRect(0, 0, w, h);
+    const nx = 8, ny = 4, cw = w / nx, ch = h / ny;
+    for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++){
+      const x = i * cw + 3, y = j * ch + 3, ew = cw - 6, eh = ch - 6;
+      const gr = g.createRadialGradient(x + ew / 2, y + eh / 2, 2, x + ew / 2, y + eh / 2, ew * 0.62);
+      gr.addColorStop(0, '#ffc08a'); gr.addColorStop(0.45, '#ff5a1e'); gr.addColorStop(1, '#8a1d06');
+      g.fillStyle = gr; g.fillRect(x, y, ew, eh);
+    }
+  });
+}
+function hmiTexture(title){
+  return canvasTex(256, 160, (g, w, h) => {
+    g.fillStyle = '#0d1620'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#22303c'; g.fillRect(0, 0, w, 24);
+    g.fillStyle = '#e8eef2'; g.font = 'bold 14px sans-serif'; g.fillText(title, 8, 17);
+    g.fillStyle = '#3ad07a'; g.fillRect(w - 46, 6, 38, 12);
+    for (let i = 0; i < 5; i++){
+      g.strokeStyle = '#4c6272'; g.lineWidth = 1; g.strokeRect(8 + i * 49, 32, 43, 34);
+      g.fillStyle = '#9fb3c1'; g.font = '10px sans-serif'; g.fillText('Z' + (i + 1), 12 + i * 49, 44);
+      g.fillStyle = '#ffffff'; g.font = 'bold 13px sans-serif'; g.fillText(String(255 + i * 5), 12 + i * 49, 61);
+    }
+    g.strokeStyle = '#5ad2ea'; g.lineWidth = 2; g.beginPath();
+    for (let x = 8; x < w - 8; x += 4){ const y = 112 + Math.sin(x / 13) * 9 + Math.sin(x / 5) * 2; x === 8 ? g.moveTo(x, y) : g.lineTo(x, y); }
+    g.stroke();
+    g.strokeStyle = '#4c6272'; g.strokeRect(8, 80, w - 16, 64);
+  });
+}
+function envScene(){
+  const s = new THREE.Scene();
+  const room = new THREE.Mesh(new THREE.BoxGeometry(24, 12, 24), new THREE.MeshBasicMaterial({color:0x7c8086, side:THREE.BackSide}));
+  room.position.y = 5; s.add(room);
+  const lm = new THREE.MeshBasicMaterial({color:0xffffff}); lm.color.setScalar(2.4);
+  [[0,10.8,0,12,0.2,5],[-11.8,5,0,0.2,3,12],[11.8,6,-3,0.2,2,8],[0,5,-11.8,10,3,0.2],[0,4,11.8,6,2,0.2]].forEach(a => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(a[3], a[4], a[5]), lm); m.position.set(a[0], a[1], a[2]); s.add(m);
+  });
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(24, 24), new THREE.MeshBasicMaterial({color:0x3e4044}));
+  fl.rotation.x = -Math.PI / 2; fl.position.y = -0.95; s.add(fl);
+  return s;
+}
+function initMats(){
+  M.light = std(0xc3c7cb, 0.25, 0.5);
+  M.light2 = std(0xdcdfe2, 0.15, 0.55);
+  M.dark = std(0x41464c, 0.35, 0.5);
+  M.frame = std(0x565c63, 0.4, 0.5);
+  M.chrome = std(0xf2f4f6, 1.0, 0.08);
+  M.steel = std(0xa4a9ae, 0.85, 0.32);
+  M.alu = std(0xcfd4d9, 0.9, 0.28);
+  M.blue = std(0x1d58a3, 0.35, 0.4);
+  M.rubber = std(0x1b1c1e, 0.0, 0.85);
+  M.black = std(0x2b2d30, 0.2, 0.6);
+  M.hoseB = std(0x2367cf, 0.05, 0.5);
+  M.hoseR = std(0xc02f29, 0.05, 0.5);
+  M.melt = std(0xd9c88f, 0.0, 0.25, {transparent:true, opacity:0.92});
+  M.pet = std(0xcfe8f0, 0.0, 0.05, {transparent:true, opacity:0.4, side:THREE.DoubleSide, depthWrite:false});
+  M.petRoll = std(0xb7d6df, 0.1, 0.12, {transparent:true, opacity:0.78});
+  M.pp = std(0xf4f5f2, 0.0, 0.35, {transparent:true, opacity:0.85, side:THREE.DoubleSide});
+  M.ppRoll = std(0xeeefeb, 0.0, 0.42);
+  M.heatTex = heaterTexture();
+  M.heaterBand = std(0x6b2a18, 0.3, 0.45, {emissive:0xff3a10, emissiveIntensity:0.95});
+  M.heaterPanel = std(0x2a2523, 0.1, 0.7, {map:M.heatTex, emissive:0xffffff, emissiveMap:M.heatTex, emissiveIntensity:1.15});
+  M.fx = new THREE.MeshBasicMaterial({color:0x39b8ff, transparent:true, opacity:0, depthWrite:false});
+}
+function applyTheme(){
+  if (!scene) return;
+  const bg = new THREE.Color(cssVar('--scene-bg', '#e4e5e6'));
+  scene.background = bg;
+  scene.fog = new THREE.Fog(bg, 30, 75);
+  floorMat.color.set(cssVar('--floor', '#d9dadb'));
+  if (grid){ scene.remove(grid); grid.geometry.dispose(); grid.material.dispose(); }
+  grid = new THREE.GridHelper(80, 80, new THREE.Color(cssVar('--grid1', '#b9bbbe')), new THREE.Color(cssVar('--grid2', '#cacbcd')));
+  grid.position.set(12, 0.003, 0);
+  scene.add(grid);
+}
+function initCore(){
+  const stage = $('stage');
+  renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(38, 1, 0.05, 250);
+  camera.position.set(3, 6, 14);
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.09;
+  controls.screenSpacePanning = true;
+  controls.maxPolarAngle = Math.PI * 0.49;
+  controls.minDistance = 0.4; controls.maxDistance = 70;
+  controls.target.set(0, 0.9, 0);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x7d8085, 0.5));
+  sun = new THREE.DirectionalLight(0xffffff, 0.85);
+  sun.castShadow = true;
+  const ss = isSmall ? 1024 : 2048;
+  sun.shadow.mapSize.set(ss, ss);
+  const sc = sun.shadow.camera; sc.left = -9; sc.right = 9; sc.top = 9; sc.bottom = -9; sc.near = 0.5; sc.far = 40;
+  sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.02;
+  scene.add(sun); scene.add(sun.target);
+  const pm = new THREE.PMREMGenerator(renderer);
+  scene.environment = pm.fromScene(envScene(), 0.03).texture;
+  pm.dispose();
+  floorMat = new THREE.MeshStandardMaterial({color:0xd9dadb, roughness:0.95, metalness:0});
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), floorMat);
+  floor.rotation.x = -Math.PI / 2; floor.position.set(12, 0, 0); floor.receiveShadow = true;
+  scene.add(floor);
+  initMats();
+  applyTheme();
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch(e) {}
+  try { new MutationObserver(applyTheme).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']}); } catch(e) {}
+}
+function newMachine(mid){
+  const root = new THREE.Group(); root.position.x = OFFS[mid]; scene.add(root);
+  const m = {id:mid, root, parts:{}, update:null, pick:[], boxes:{}, fx:[]};
+  m.part = pid => { const g = new THREE.Group(); g.userData.partId = pid; root.add(g); m.parts[pid] = g; return g; };
+  MACH[mid] = m; return m;
+}
+/* ===================== Machine 1: sheet extrusion line ===================== */
+function buildLine(){
+  const m = newMachine('line'), R = m.root;
+  // --- dryer
+  let g = m.part('dryer');
+  [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]].forEach(q => Cy(g, 0.03, 0.03, 0.72, M.dark, -6.5 + q[0], 0.36, -0.25 + q[1], 'y', 8));
+  Cy(g, 0.46, 0.09, 0.36, M.light2, -6.5, 0.9, -0.25, 'y', 28);
+  Cy(g, 0.46, 0.46, 1.5, M.light2, -6.5, 1.83, -0.25, 'y', 28);
+  [1.25, 1.83, 2.41].forEach(y => Cy(g, 0.475, 0.475, 0.05, M.frame, -6.5, y, -0.25, 'y', 28));
+  Cy(g, 0.3, 0.46, 0.16, M.light2, -6.5, 2.66, -0.25, 'y', 28);
+  B(g, 0.55, 0.9, 0.48, M.dark, -6.45, 0.45, 0.62);
+  Cy(g, 0.11, 0.11, 0.26, M.blue, -6.45, 1.03, 0.62, 'y', 16);
+  T(g, [[-6.45,0.9,0.5],[-6.3,1.6,0.35],[-6.3,2.6,0.1],[-6.42,2.75,-0.12]], 0.06, M.light, 24);
+  // --- loader + hose
+  g = m.part('loader');
+  Cy(g, 0.16, 0.16, 0.34, M.light2, -4.55, 2.33, 0, 'y', 20);
+  Cy(g, 0.07, 0.16, 0.14, M.light2, -4.55, 2.09, 0, 'y', 20);
+  Cy(g, 0.09, 0.09, 0.14, M.blue, -4.55, 2.57, 0, 'y', 16);
+  T(g, [[-6.5,0.7,-0.25],[-6.2,0.32,-0.05],[-5.6,0.42,0.22],[-5.05,1.8,0.22],[-4.78,2.36,0.06],[-4.7,2.38,0]], 0.03, M.black, 48);
+  // --- hopper + dosing
+  g = m.part('hopper');
+  B(g, 0.32, 0.18, 0.32, M.light, -4.55, 1.45, 0);
+  const hop = Cy(g, 0.34, 0.08, 0.6, M.light2, -4.55, 1.84, 0, 'y', 4); hop.rotation.y = Math.PI / 4;
+  // --- extruder: base, motor, gearbox, feed throat, barrel
+  g = m.part('extruder');
+  B(g, 4.45, 0.62, 0.8, M.dark, -3.725, 0.31, 0);
+  Cy(g, 0.24, 0.24, 0.6, M.blue, -5.45, 0.97, 0, 'x', 28);
+  Cy(g, 0.2, 0.2, 0.08, M.dark, -5.79, 0.97, 0, 'x', 24);
+  B(g, 0.22, 0.12, 0.2, M.blue, -5.45, 1.25, 0);
+  B(g, 0.42, 0.72, 0.64, M.light, -4.95, 1.0, 0);
+  B(g, 0.4, 0.32, 0.38, M.light, -4.55, 1.2, 0);
+  B(g, 0.14, 0.46, 0.3, M.dark, -1.75, 0.85, 0);
+  B(g, 0.16, 0.42, 0.34, M.dark, -4.55, 0.83, 0);
+  casing(Cy(g, 0.12, 0.12, 2.7, M.steel, -3.0, 1.2, 0, 'x', 28));
+  // --- heaters (5 zones)
+  g = m.part('heaters');
+  [-4.05, -3.52, -2.99, -2.46, -1.93].forEach(x => { const h = Cy(g, 0.155, 0.155, 0.34, M.heaterBand, x, 1.2, 0, 'x', 28); h.userData.casing = true; h.userData.glow = true; });
+  // --- screw (inside the barrel)
+  g = m.part('screw');
+  const screw = grp(g, -3.0, 1.2, 0);
+  Cy(screw, 0.056, 0.056, 2.68, M.chrome, 0, 0, 0, 'x', 16);
+  const hp = [], pitch = 0.18;
+  for (let a = 0; ; a += Math.PI / 8){ const x = -1.33 + a / (Math.PI * 2) * pitch; if (x > 1.33) break; hp.push([x, Math.cos(a) * 0.088, Math.sin(a) * 0.088]); }
+  T(screw, hp, 0.022, M.chrome, hp.length * 2);
+  // --- screen changer
+  g = m.part('screen');
+  Cy(g, 0.16, 0.16, 0.1, M.steel, -1.6, 1.2, 0, 'x', 24);
+  B(g, 0.3, 0.38, 0.5, M.steel, -1.4, 1.2, 0);
+  B(g, 0.24, 0.3, 0.22, M.steel, -1.4, 1.2, -0.36);
+  Cy(g, 0.055, 0.055, 0.55, M.black, -1.4, 1.2, 0.52, 'z', 16);
+  Cy(g, 0.02, 0.02, 0.26, M.chrome, -1.4, 1.2, 0.91, 'z', 10);
+  // --- melt pump
+  g = m.part('pump');
+  Cy(g, 0.06, 0.06, 0.16, M.steel, -1.17, 1.2, 0, 'x', 16);
+  B(g, 0.34, 0.34, 0.34, M.light, -0.92, 1.2, 0);
+  B(g, 0.22, 0.22, 0.25, M.light2, -0.92, 1.2, 0.3);
+  Cy(g, 0.12, 0.12, 0.34, M.blue, -0.92, 1.2, 0.58, 'z', 20);
+  B(g, 0.25, 1.0, 0.25, M.dark, -0.92, 0.5, 0);
+  // --- flat T-die
+  g = m.part('die');
+  Cy(g, 0.06, 0.06, 0.22, M.steel, -0.64, 1.2, 0, 'x', 16);
+  casing(B(g, 0.3, 0.3, 1.6, M.steel, -0.32, 1.2, 0));
+  casing(B(g, 0.14, 0.12, 1.6, M.steel, -0.1, 1.2, 0));
+  B(g, 0.08, 0.95, 0.08, M.dark, -0.32, 0.525, 0.72);
+  B(g, 0.08, 0.95, 0.08, M.dark, -0.32, 0.525, -0.72);
+  const bolts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.016, 0.016, 0.07, 6), M.dark, 23);
+  const dm = new THREE.Object3D();
+  for (let i = 0; i < 23; i++){ dm.position.set(-0.13, 1.29, -0.73 + i * (1.46 / 22)); dm.updateMatrix(); bolts.setMatrixAt(i, dm.matrix); }
+  bolts.castShadow = true; g.add(bolts);
+  const sh = new THREE.Shape();
+  sh.moveTo(-0.46, -0.05); sh.lineTo(-0.22, -0.74); sh.lineTo(-0.05, -0.76); sh.lineTo(-0.05, 0.76); sh.lineTo(-0.22, 0.74); sh.lineTo(-0.46, 0.05); sh.closePath();
+  const mg = new THREE.ExtrudeGeometry(sh, {depth:0.03, bevelEnabled:false}); mg.rotateX(Math.PI / 2);
+  add(g, mg, M.melt, 0, 1.215, 0, true);
+  // --- 3-roll stack
+  g = m.part('rolls');
+  const rolls = [1.402, 0.998, 0.594].map(y => Cy(g, 0.2, 0.2, 1.5, M.chrome, 0.3, y, 0, 'z', 40));
+  [1.402, 0.998, 0.594].forEach(y => { Cy(g, 0.06, 0.06, 0.14, M.steel, 0.3, y, 0.82, 'z', 16); Cy(g, 0.06, 0.06, 0.14, M.steel, 0.3, y, -0.82, 'z', 16); Cy(g, 0.085, 0.085, 0.24, M.blue, 0.3, y, -1.06, 'z', 16); });
+  B(g, 0.62, 1.75, 0.07, M.light, 0.3, 0.875, 0.92);
+  B(g, 0.62, 1.75, 0.07, M.light, 0.3, 0.875, -0.92);
+  B(g, 0.8, 0.1, 1.95, M.dark, 0.3, 0.05, 0);
+  // --- sheet (melt curtain -> rolls -> conveyor -> haul-off)
+  const sheetTex = sheetTexture();
+  const sheetMat = M.pet.clone(); sheetMat.map = sheetTex;
+  const sy = x => 0.44 + (x - 1.0) * (0.51 / 2.45);
+  let path = [[-0.04, 1.2], [0.24, 1.2]].concat(arcPts(0.3, 0.998, 0.203, Math.PI / 2, -Math.PI / 2, 18), arcPts(0.3, 0.594, 0.203, Math.PI / 2, Math.PI * 1.5, 18).slice(1),
+    [[0.7, 0.391], [0.88, 0.405], [1.0, 0.44], [3.45, 0.95], [5.27, 0.95]]);
+  add(R, ribbonGeo(path, 1.2, 0.5), sheetMat, 0, 0, 0, true);
+  const appr = add(R, ribbonGeo([[5.27, 0.95], [6.25, 0.8]], 1.2, 0.5), sheetMat, 0, 0, 0, true);
+  // --- water temperature units
+  g = m.part('tcu');
+  [-0.1, 0.5].forEach((x, i) => {
+    B(g, 0.42, 0.68, 0.42, M.light2, x, 0.34, -1.48);
+    B(g, 0.2, 0.12, 0.012, M.black, x, 0.5, -1.268);
+    T(g, [[x + 0.09, 0.45, -1.27], [x + 0.12, 0.62, -1.15], [0.24, i ? 0.62 : 1.0, -1.02], [0.3, i ? 0.594 : 0.998, -0.96]], 0.022, M.hoseB, 24);
+    T(g, [[x - 0.09, 0.45, -1.27], [x - 0.1, 0.95, -1.2], [0.2, i ? 1.0 : 1.38, -1.05], [0.3, i ? 0.998 : 1.402, -0.96]], 0.022, M.hoseR, 24);
+  });
+  // --- cooling roller conveyor
+  g = m.part('conveyor');
+  const nR = 21, rollers = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.04, 0.04, 1.3, 14).rotateX(Math.PI / 2), M.steel, nR);
+  for (let i = 0; i < nR; i++){ const x = 1.15 + i * 0.11; dm.position.set(x, sy(x) - 0.045, 0); dm.updateMatrix(); rollers.setMatrixAt(i, dm.matrix); }
+  rollers.castShadow = true; rollers.receiveShadow = true; g.add(rollers);
+  const ang = Math.atan2(0.51, 2.45);
+  [0.7, -0.7].forEach(z => { const r = B(g, 2.52, 0.1, 0.05, M.light, 2.225, sy(2.225) - 0.09, z); r.rotation.z = ang; });
+  [1.3, 2.25, 3.2].forEach(x => { const h = sy(x) - 0.12; [0.7, -0.7].forEach(z => B(g, 0.05, h, 0.05, M.dark, x, h / 2, z)); });
+  // --- O-frame thickness gauge
+  g = m.part('gauge');
+  B(g, 0.16, 0.12, 1.9, M.light2, 3.9, 1.3, 0);
+  B(g, 0.16, 0.12, 1.9, M.light2, 3.9, 0.6, 0);
+  [0.89, -0.89].forEach(z => { B(g, 0.16, 1.36, 0.12, M.light2, 3.9, 0.68, z); B(g, 0.5, 0.05, 0.18, M.dark, 3.9, 0.025, z); });
+  const head1 = B(g, 0.2, 0.1, 0.16, M.black, 3.9, 1.19, 0), head2 = B(g, 0.2, 0.1, 0.16, M.black, 3.9, 0.71, 0);
+  // --- edge trim knives
+  g = m.part('edge');
+  B(g, 0.08, 0.08, 1.74, M.dark, 4.5, 1.2, 0);
+  [0.86, -0.86].forEach(z => B(g, 0.06, 1.2, 0.06, M.dark, 4.5, 0.6, z));
+  [0.57, -0.57].forEach(z => { B(g, 0.07, 0.18, 0.07, M.dark, 4.5, 1.07, z); Cy(g, 0.065, 0.065, 0.008, M.chrome, 4.5, 0.96, z, 'z', 32); });
+  T(g, [[4.6, 0.95, 0.6], [4.75, 1.08, 1.0], [4.82, 1.12, 1.45], [4.85, 1.05, 1.72]], 0.014, M.petRoll, 24);
+  T(g, [[4.6, 0.95, -0.6], [4.7, 1.38, -0.3], [4.78, 1.4, 0.9], [4.85, 1.08, 1.72]], 0.014, M.petRoll, 32);
+  // --- haul-off rubber rolls
+  g = m.part('haul');
+  const haul = [1.062, 0.838].map(y => Cy(g, 0.11, 0.11, 1.4, M.rubber, 5.15, y, 0, 'z', 28));
+  [0.8, -0.8].forEach(z => { B(g, 0.36, 1.3, 0.07, M.light, 5.15, 0.65, z); Cy(g, 0.04, 0.04, 0.22, M.black, 5.15, 1.36, z, 'y', 12); });
+  Cy(g, 0.1, 0.1, 0.3, M.blue, 5.15, 0.84, -1.02, 'z', 18);
+  B(g, 0.2, 0.2, 0.14, M.light2, 5.15, 0.84, -0.88);
+  // --- turret winder
+  g = m.part('winder');
+  [0.92, -0.92].forEach(z => { B(g, 0.62, 1.5, 0.08, M.light, 6.45, 0.75, z); Cy(g, 0.5, 0.5, 0.05, M.dark, 6.45, 0.95, z * 0.92, 'z', 32); });
+  B(g, 0.95, 0.08, 2.0, M.dark, 6.45, 0.04, 0);
+  Cy(g, 0.045, 0.045, 1.76, M.chrome, 6.25, 0.62, 0, 'z', 16);
+  Cy(g, 0.045, 0.045, 1.76, M.chrome, 6.65, 1.28, 0, 'z', 16);
+  Cy(g, 0.085, 0.085, 1.22, M.light2, 6.65, 1.28, 0, 'z', 20);
+  Cy(g, 0.12, 0.12, 0.3, M.blue, 6.45, 0.95, -1.12, 'z', 18);
+  const wroll = Cy(g, 1, 1, 1.2, M.petRoll, 6.25, 0.62, 0, 'z', 40);
+  Cy(g, 0.085, 0.085, 1.22, M.light2, 6.25, 0.62, 0, 'z', 20);
+  // --- edge grinder
+  g = m.part('grinder');
+  B(g, 0.6, 0.7, 0.55, M.dark, 4.85, 0.35, 1.75);
+  const fun = Cy(g, 0.36, 0.18, 0.38, M.light, 4.85, 0.89, 1.75, 'y', 4); fun.rotation.y = Math.PI / 4;
+  Cy(g, 0.12, 0.12, 0.34, M.blue, 5.32, 0.35, 1.75, 'x', 18);
+  // --- operator panel
+  g = m.part('hmi');
+  hmiStand(g, -2.6, 1.35, 'ЛИНИЯ ЛИСТА');
+  // --- non-part: control cabinet
+  B(R, 1.4, 2.0, 0.5, M.light2, -3.8, 1.0, -1.7);
+  // --- animation
+  let wr = 0.2;
+  const ap = appr.geometry.attributes.position;
+  m.update = (dt, t) => {
+    screw.rotation.x -= dt * 4;
+    rolls.forEach((r, i) => { r.rotation.z += (i === 1 ? -1 : 1) * dt * 2.2; });
+    haul.forEach((r, i) => { r.rotation.z += (i ? 1 : -1) * dt * 4; });
+    sheetTex.offset.x -= dt * 0.9;
+    wr += dt * 0.004; if (wr > 0.42) wr = 0.16;
+    wroll.scale.set(wr, wr, 1); wroll.rotation.z -= dt * 2;
+    const ty = 0.62 + wr;
+    ap.setY(2, ty); ap.setY(3, ty); ap.needsUpdate = true;
+    head1.position.z = head2.position.z = Math.sin(t * 0.9) * 0.62;
+  };
+  wroll.scale.set(wr, wr, 1); ap.setX(2, 6.25); ap.setX(3, 6.25); ap.setY(2, 0.62 + wr); ap.setY(3, 0.62 + wr); ap.needsUpdate = true;
+  m.home = {dir:[0.18, 0.5, 1], fitW:14.6, fitH:3.2, target:[0, 0.95, 0]};
+  return m;
+}
+function hmiStand(g, x, z, title){
+  B(g, 0.32, 0.04, 0.32, M.dark, x, 0.02, z);
+  Cy(g, 0.045, 0.045, 1.1, M.dark, x, 0.57, z, 'y', 12);
+  const p = grp(g, x, 1.3, z); p.rotation.x = -0.4;
+  B(p, 0.54, 0.38, 0.06, M.dark, 0, 0, 0);
+  const s = new THREE.Mesh(new THREE.PlaneGeometry(0.47, 0.3), new THREE.MeshBasicMaterial({map:hmiTexture(title)}));
+  s.position.z = 0.031; p.add(s);
+}
+/* ===================== Machine 2: roll-fed vacuum former (PET cake domes) ===================== */
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+const smooth = v => { v = clamp01(v); return v * v * (3 - 2 * v); };
+const bump = (p, a, b) => (p <= a || p >= b) ? 0 : Math.sin((p - a) / (b - a) * Math.PI);
+function domeH(r, R, H){ if (r >= R) return 0; const t = r / R; if (t < 0.7) return H * (1 - 0.2 * (t / 0.7) * (t / 0.7)); return H * 0.8 * Math.cos((t - 0.7) / 0.3 * Math.PI / 2); }
+function domeLathe(R, H, seg){ const pts = []; for (let i = 0; i <= 16; i++){ const t = 1 - i / 16; pts.push(new THREE.Vector2(Math.max(t * R, 0.0005), domeH(t * R * 0.9999, R, H))); } return new THREE.LatheGeometry(pts, seg || 28); }
+function pinRail(g, x0, len, zs, y){
+  const sp = 0.05, n = Math.floor(len / sp), im = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.006, 0.006, 0.035, 6), M.chrome, n * zs.length);
+  const o = new THREE.Object3D();
+  im.userData.set = shift => { let k = 0; zs.forEach(z => { for (let i = 0; i < n; i++){ o.position.set(x0 + ((i * sp + shift) % len), y, z); o.updateMatrix(); im.setMatrixAt(k++, o.matrix); } }); im.instanceMatrix.needsUpdate = true; };
+  im.userData.set(0); g.add(im); return im;
+}
+function buildVac(){
+  const m = newMachine('vac'), R = m.root, P = 0.8, X0 = 0.7, XC = 2.3, W = 0.9;
+  // --- frame (not a part)
+  B(R, 7.0, 0.12, 1.15, M.dark, -0.5, 0.06, 0);
+  [-3.25, -1.35].forEach(x => [0.62, -0.62].forEach(z => B(R, 0.08, 1.63, 0.08, M.frame, x, 0.935, z)));
+  [0.62, -0.62].forEach(z => B(R, 2.0, 0.08, 0.08, M.frame, -2.3, 1.75, z));
+  [X0 - 0.56, X0 + 0.56].forEach(x => [0.62, -0.62].forEach(z => B(R, 0.08, 1.78, 0.08, M.frame, x, 1.01, z)));
+  B(R, 1.3, 0.12, 1.36, M.light, X0, 1.94, 0);
+  [0.645, -0.645].forEach(z => casing(B(R, 1.04, 0.74, 0.02, M.light2.clone(), X0, 0.5, z)));
+  // --- unwinder
+  let g = m.part('unwinder');
+  [0.58, -0.58].forEach(z => B(g, 0.5, 1.0, 0.06, M.light, -4.6, 0.5, z));
+  B(g, 0.7, 0.06, 1.3, M.dark, -4.6, 0.03, 0);
+  Cy(g, 0.04, 0.04, 1.3, M.chrome, -4.6, 0.85, 0, 'z', 14);
+  Cy(g, 0.36, 0.36, 0.95, M.petRoll, -4.6, 0.85, 0, 'z', 40);
+  Cy(g, 0.08, 0.08, 0.97, M.light2, -4.6, 0.85, 0, 'z', 18);
+  Cy(g, 0.05, 0.05, 1.02, M.chrome, -4.05, 1.0, 0, 'z', 18);
+  [0.55, -0.55].forEach(z => B(g, 0.05, 1.0, 0.05, M.dark, -4.05, 0.5, z));
+  // --- upstream flat sheet (steps forward each cycle)
+  const upTex = sheetTexture(), upMat = M.pet.clone(); upMat.map = upTex;
+  add(R, ribbonGeo([[-4.6, 1.21], [-4.3, 1.12], [-4.1, 1.055]].concat(arcPts(-4.05, 1.0, 0.052, Math.PI * 0.75, Math.PI * 0.5, 4).slice(1), [[-3.9, 1.0], [X0 - P / 2, 1.0]]), W, 0.5), upMat, 0, 0, 0, true);
+  // --- pin chains
+  g = m.part('chains');
+  [0.47, -0.47].forEach(z => { B(g, 6.7, 0.05, 0.04, M.dark, -0.575, 0.975, z); Cy(g, 0.06, 0.06, 0.05, M.steel, -3.92, 0.975, z, 'z', 20); Cy(g, 0.06, 0.06, 0.05, M.steel, 2.77, 0.975, z, 'z', 20); });
+  const pins = pinRail(g, -3.9, 6.6, [0.47, -0.47], 1.01);
+  // --- heaters
+  g = m.part('heater_top');
+  B(g, 1.7, 0.12, 1.0, M.dark, -2.3, 1.24, 0);
+  const ht = add(g, new THREE.PlaneGeometry(1.6, 0.92), M.heaterPanel, -2.3, 1.177, 0, true); ht.rotation.x = Math.PI / 2;
+  g = m.part('heater_bottom');
+  B(g, 1.7, 0.12, 1.0, M.dark, -2.3, 0.74, 0);
+  const hb = add(g, new THREE.PlaneGeometry(1.6, 0.92), M.heaterPanel, -2.3, 0.803, 0, true); hb.rotation.x = -Math.PI / 2;
+  // --- forming table (moves up/down)
+  g = m.part('table');
+  B(g, 0.5, 0.3, 0.5, M.light, X0, 0.27, 0);
+  [[0.45, 0.42], [0.45, -0.42], [-0.45, 0.42], [-0.45, -0.42]].forEach(q => Cy(g, 0.028, 0.028, 1.78, M.chrome, X0 + q[0], 1.01, q[1], 'y', 12));
+  const tableMove = grp(g, X0, 0.54, 0);
+  B(tableMove, 1.0, 0.08, 0.95, M.light2, 0, 0, 0);
+  Cy(tableMove, 0.05, 0.05, 0.5, M.chrome, 0, -0.29, 0, 'y', 14);
+  // --- mould (positive domes) rides on the table
+  g = m.part('mould');
+  const mouldMove = grp(g, X0, 0.54, 0);
+  B(mouldMove, 0.9, 0.04, 0.86, M.alu, 0, 0.06, 0);
+  const dCtr = [[-0.2, -0.21], [0.2, -0.21], [-0.2, 0.21], [0.2, 0.21]];
+  const mDome = domeLathe(0.165, 0.138, 28);
+  dCtr.forEach(c => add(mouldMove, mDome, M.alu, c[0], 0.08, c[1]));
+  // --- formed web: station segment (forms) + downstream segments
+  const fg = new THREE.PlaneGeometry(P, W, 40, 46); fg.rotateX(-Math.PI / 2);
+  const fp = fg.attributes.position;
+  for (let i = 0; i < fp.count; i++){
+    const x = fp.getX(i), z = fp.getZ(i); let h = 0;
+    dCtr.forEach(c => { h = Math.max(h, domeH(Math.hypot(x - c[0], z - c[1]), 0.17, 0.14)); });
+    fp.setY(i, h);
+  }
+  fg.computeVertexNormals();
+  const webG = grp(R, 0, 0, 0);
+  const stationSeg = add(webG, fg, M.pet, X0, 1.0, 0, true);
+  add(webG, fg, M.pet, X0 + P, 1.0, 0, true);
+  add(webG, fg, M.pet, X0 + 2 * P, 1.0, 0, true);
+  // --- vacuum pump + receiver
+  g = m.part('vacuum');
+  B(g, 0.36, 0.32, 0.32, M.light, X0 - 0.2, 0.2, 1.25);
+  Cy(g, 0.12, 0.12, 0.36, M.blue, X0 - 0.56, 0.2, 1.25, 'x', 18);
+  Cy(g, 0.22, 0.22, 0.95, M.light2, X0 + 0.65, 0.36, 1.25, 'x', 28);
+  [X0 + 0.35, X0 + 0.95].forEach(x => B(g, 0.08, 0.16, 0.36, M.dark, x, 0.08, 1.25));
+  T(g, [[X0 - 0.02, 0.24, 1.25], [X0 + 0.1, 0.42, 1.25], [X0 + 0.2, 0.36, 1.25]], 0.025, M.black, 12);
+  T(g, [[X0 + 0.65, 0.58, 1.25], [X0 + 0.55, 0.66, 0.92], [X0 + 0.3, 0.32, 0.55], [X0 + 0.1, 0.27, 0.26]], 0.035, M.black, 24);
+  // vacuum arrows (effect, not clickable)
+  const arrows = grp(R, 0, 0, 0), arrowMat = M.fx.clone();
+  const cone = new THREE.ConeGeometry(0.035, 0.08, 10); cone.rotateX(Math.PI);
+  const shaft = new THREE.CylinderGeometry(0.01, 0.01, 0.12, 6);
+  dCtr.forEach(c => [-1, 1].forEach(s => { const a = grp(arrows, X0 + c[0] + s * 0.19, 1.28, c[1]); add(a, cone, arrowMat, 0, -0.04, 0, true); add(a, shaft, arrowMat, 0, 0.06, 0, true); }));
+  // --- cooling fans
+  g = m.part('cooling');
+  const darkDS = M.dark.clone(); darkDS.side = THREE.DoubleSide;
+  const rotors = [X0 - 0.24, X0 + 0.24].map(x => {
+    Cy(g, 0.2, 0.2, 0.07, darkDS, x, 1.62, 0, 'y', 28, true);
+    B(g, 0.05, 0.22, 0.05, M.dark, x, 1.77, 0);
+    const r = grp(g, x, 1.62, 0);
+    Cy(r, 0.04, 0.04, 0.07, M.dark, 0, 0, 0, 'y', 12);
+    for (let i = 0; i < 4; i++){ const b = B(r, 0.15, 0.008, 0.06, M.light2, 0, 0, 0); b.position.set(Math.cos(i * Math.PI / 2) * 0.1, 0, Math.sin(i * Math.PI / 2) * 0.1); b.rotation.y = -i * Math.PI / 2; b.rotation.x = 0.35; }
+    return r;
+  });
+  // --- separate cutting press
+  g = m.part('cutter');
+  B(g, 0.95, 0.72, 0.95, M.dark, XC, 0.44, 0);
+  B(g, 0.95, 0.14, 1.05, M.light, XC, 0.86, 0);
+  [[0.42, 0.5], [0.42, -0.5], [-0.42, 0.5], [-0.42, -0.5]].forEach(q => Cy(g, 0.035, 0.035, 1.0, M.chrome, XC + q[0], 1.4, q[1], 'y', 12));
+  B(g, 1.0, 0.14, 1.15, M.light, XC, 1.88, 0);
+  Cy(g, 0.1, 0.1, 0.3, M.blue, XC, 2.1, 0, 'y', 18);
+  const platen = B(g, 0.85, 0.1, 1.0, M.light2, XC, 1.5, 0);
+  // --- stacker: stacks of nested domes
+  g = m.part('stacker');
+  B(g, 1.1, 0.06, 0.8, M.light2, 3.55, 0.78, 1.05);
+  [[3.05, 0.7], [4.05, 0.7], [3.05, 1.4], [4.05, 1.4]].forEach(q => B(g, 0.05, 0.75, 0.05, M.dark, q[0], 0.375, q[1]));
+  const sPos = [[3.3, 0.85], [3.8, 0.85], [3.3, 1.25], [3.8, 1.25]], NL = 16;
+  const stack = new THREE.InstancedMesh(domeLathe(0.17, 0.14, 24), M.pet, NL * 4);
+  for (let k = 0; k < NL; k++) sPos.forEach((q, j) => { dm2.position.set(q[0], 0.81 + k * 0.016, q[1]); dm2.updateMatrix(); stack.setMatrixAt(k * 4 + j, dm2.matrix); });
+  let layers = 6; stack.count = layers * 4; g.add(stack);
+  // --- skeleton (waste web) winding
+  g = m.part('skeleton');
+  const skTex = holesTexture([0.25, 0.75], [0.267, 0.733], 0.17 / P, 0.17 / W);
+  const skMat = M.pet.clone(); skMat.alphaMap = skTex; skMat.opacity = 0.5;
+  const skel = add(R, ribbonGeo([[XC + 0.45, 1.0], [3.5, 1.0], [4.15, 0.62]], W, P), skMat, 0, 0, 0, true);
+  [0.55, -0.55].forEach(z => B(g, 0.4, 0.62, 0.06, M.light, 4.15, 0.31, z));
+  Cy(g, 0.03, 0.03, 1.2, M.chrome, 4.15, 0.5, 0, 'z', 12);
+  Cy(g, 0.08, 0.08, 0.22, M.blue, 4.15, 0.5, -0.7, 'z', 14);
+  const skRoll = Cy(g, 1, 1, 0.92, M.petRoll, 4.15, 0.5, 0, 'z', 32);
+  // --- operator panel
+  g = m.part('hmi');
+  hmiStand(g, -1.3, 1.25, 'ВАКУУМФОРМОВКА');
+  // --- animation (one forming cycle = 4 s)
+  const skp = skel.geometry.attributes.position;
+  let tt = 0, lastC = -1, skR = 0.12;
+  m.update = dt => {
+    tt += dt; const Tc = 4.0, c = Math.floor(tt / Tc), p = (tt % Tc) / Tc;
+    if (c !== lastC){ lastC = c; stationSeg.scale.y = 0.001; layers = layers >= NL ? 4 : layers + 1; stack.count = layers * 4; }
+    const e = smooth((p - 0.8) / 0.2);
+    webG.position.x = e * P;
+    upTex.offset.x = -(c + e) * P / 0.5;
+    skTex.offset.x = -(c + e);
+    if (p > 0.79) pins.userData.set(e * P);
+    const up = p < 0.2 ? 0 : p < 0.4 ? smooth((p - 0.2) / 0.2) : p < 0.6 ? 1 : p < 0.8 ? 1 - smooth((p - 0.6) / 0.2) : 0;
+    const yT = 0.54 + up * 0.38;
+    tableMove.position.y = mouldMove.position.y = yT;
+    if (p >= 0.2 && p < 0.6) stationSeg.scale.y = Math.max(stationSeg.scale.y, Math.min(1, Math.max(0.001, (yT + 0.22 - 1.0) / 0.14)));
+    const va = bump(p, 0.36, 0.64);
+    arrowMat.opacity = va * 0.95;
+    arrows.children.forEach(a => { a.position.y = 1.3 - ((tt * 0.5) % 0.12); });
+    arrows.visible = va > 0.01;
+    platen.position.y = 1.5 - 0.31 * bump(p, 0.3, 0.56);
+    rotors.forEach(r => { r.rotation.y += dt * (p > 0.4 && p < 0.8 ? 16 : 6); });
+    skR += dt * 0.002; if (skR > 0.3) skR = 0.12;
+    skRoll.scale.set(skR, skR, 1); skRoll.rotation.z -= dt * 1.5;
+    skp.setY(4, 0.5 + skR); skp.setY(5, 0.5 + skR); skp.needsUpdate = true;
+  };
+  skRoll.scale.set(skR, skR, 1); stationSeg.scale.y = 1;
+  m.home = {dir:[0.22, 0.55, 1], fitW:9.8, fitH:2.6, target:[-0.2, 1.0, 0.2]};
+  return m;
+}
+const dm2 = new (window.THREE ? THREE.Object3D : Object)();
+/* ===================== Machine 3: PP cup thermoformer with tilting mould ===================== */
+function cupLathe(seg){
+  const pts = [[0.001, 0], [0.026, 0], [0.028, 0.006], [0.04, 0.088], [0.046, 0.09], [0.046, 0.095]].map(q => new THREE.Vector2(q[0], q[1]));
+  return new THREE.LatheGeometry(pts, seg || 16);
+}
+function cavityTexture(us, vs, r){
+  return canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#c4c9ce'; g.fillRect(0, 0, w, h);
+    us.forEach(u => vs.forEach(v => {
+      const gr = g.createRadialGradient(u * w, v * h, 2, u * w, v * h, r * w);
+      gr.addColorStop(0, '#23272b'); gr.addColorStop(0.8, '#4a5056'); gr.addColorStop(1, '#8d939a');
+      g.fillStyle = gr; g.beginPath(); g.arc(u * w, v * h, r * w, 0, Math.PI * 2); g.fill();
+    }));
+  });
+}
+function buildThermo(){
+  const m = newMachine('thermo'), R = m.root, P = 0.8, X0 = 0.3, W = 0.8, SY = 1.05;
+  const cupX = [-0.2, 0.2], cupZ = [-0.3, -0.1, 0.1, 0.3];
+  // --- frame (not a part)
+  B(R, 4.6, 0.12, 1.05, M.dark, -0.6, 0.06, 0);
+  [-2.25, -0.65].forEach(x => [0.58, -0.58].forEach(z => B(R, 0.08, 1.6, 0.08, M.frame, x, 0.92, z)));
+  [0.58, -0.58].forEach(z => B(R, 1.7, 0.08, 0.08, M.frame, -1.45, 1.72, z));
+  [X0 - 0.52, X0 + 0.52].forEach(x => [0.6, -0.6].forEach(z => B(R, 0.09, 2.08, 0.09, M.frame, x, 1.16, z)));
+  B(R, 1.2, 0.14, 1.32, M.light, X0, 2.2, 0);
+  [0.625, -0.625].forEach(z => casing(B(R, 0.95, 0.72, 0.02, M.light2.clone(), X0, 0.5, z)));
+  B(R, 0.3, 0.5, 0.9, M.dark, 2.95, 0.25, 0);
+  // --- unwinder
+  let g = m.part('unwinder');
+  [0.52, -0.52].forEach(z => B(g, 0.46, 0.95, 0.06, M.light, -3.2, 0.475, z));
+  B(g, 0.66, 0.06, 1.2, M.dark, -3.2, 0.03, 0);
+  Cy(g, 0.04, 0.04, 1.2, M.chrome, -3.2, 0.85, 0, 'z', 14);
+  Cy(g, 0.32, 0.32, 0.85, M.ppRoll, -3.2, 0.85, 0, 'z', 40);
+  Cy(g, 0.08, 0.08, 0.87, M.light2, -3.2, 0.85, 0, 'z', 18);
+  // --- sheets
+  const upTex = sheetTexture(), upMat = M.pp.clone(); upMat.map = upTex;
+  add(R, ribbonGeo([[-3.2, 1.17], [-2.95, 1.09], [-2.7, SY], [X0 - P / 2, SY]], W, 0.5), upMat, 0, 0, 0, true);
+  const skTex = holesTexture(cupX.map(x => (x + P / 2) / P), cupZ.map(z => (z + W / 2) / W), 0.05 / P, 0.05 / W);
+  const holesMat = M.pp.clone(); holesMat.alphaMap = skTex; holesMat.transparent = true;
+  const segTex = holesTexture(cupX.map(x => (x + P / 2) / P), cupZ.map(z => (z + W / 2) / W), 0.05 / P, 0.05 / W);
+  const segHoles = M.pp.clone(); segHoles.alphaMap = segTex; segHoles.transparent = true;
+  add(R, ribbonGeo([[X0 + P / 2, SY], [2.55, SY], [2.78, 0.86], [2.85, 0.52]], W, P), holesMat, 0, 0, 0, true);
+  const web = grp(R, 0, 0, 0);
+  const sg = new THREE.PlaneGeometry(P, W); sg.rotateX(-Math.PI / 2);
+  const seg = add(web, sg, upMat, X0, SY + 0.002, 0, true);
+  // --- pin chains
+  g = m.part('chains');
+  [0.42, -0.42].forEach(z => { B(g, 4.35, 0.05, 0.04, M.dark, -0.55, SY - 0.025, z); Cy(g, 0.055, 0.055, 0.05, M.steel, -2.72, SY - 0.025, z, 'z', 20); Cy(g, 0.055, 0.055, 0.05, M.steel, 1.62, SY - 0.025, z, 'z', 20); });
+  const pins = pinRail(g, -2.7, 4.3, [0.42, -0.42], SY + 0.01);
+  // --- heaters top + bottom
+  g = m.part('heaters');
+  B(g, 1.5, 0.12, 0.92, M.dark, -1.45, 1.29, 0);
+  const h1 = add(g, new THREE.PlaneGeometry(1.4, 0.84), M.heaterPanel, -1.45, 1.227, 0, true); h1.rotation.x = Math.PI / 2;
+  B(g, 1.5, 0.12, 0.92, M.dark, -1.45, 0.79, 0);
+  const h2 = add(g, new THREE.PlaneGeometry(1.4, 0.84), M.heaterPanel, -1.45, 0.853, 0, true); h2.rotation.x = -Math.PI / 2;
+  // --- plug-assist platen (moves down)
+  g = m.part('plug');
+  Cy(g, 0.09, 0.09, 0.36, M.blue, X0, 1.97, 0, 'y', 18);
+  const plugMove = grp(g, X0, 1.5, 0);
+  B(plugMove, 0.75, 0.08, 0.75, M.light2, 0, 0, 0);
+  Cy(plugMove, 0.035, 0.035, 0.5, M.chrome, 0, 0.29, 0, 'y', 12);
+  const plugG = new THREE.CylinderGeometry(0.034, 0.03, 0.12, 16);
+  cupX.forEach(x => cupZ.forEach(z => add(plugMove, plugG, M.black, x, -0.1, z)));
+  // --- tilting mould
+  g = m.part('mould_tilt');
+  [0.5, -0.5].forEach(z => { Cy(g, 0.05, 0.05, 0.45, M.blue, X0, 0.345, z * 1.04, 'y', 14); [-0.42, 0.42].forEach(dx => Cy(g, 0.022, 0.022, 0.8, M.chrome, X0 + dx, 0.52, z, 'y', 10)); });
+  const mouldLift = grp(g, X0, 0.595, 0);
+  [0.44, -0.44].forEach(z => Cy(mouldLift, 0.06, 0.06, 0.08, M.dark, 0, 0, z, 'z', 16));
+  const tiltG = grp(mouldLift, 0, 0, 0);
+  casing(B(tiltG, 0.8, 0.3, 0.8, M.alu.clone(), 0, 0, 0)).userData.cutOp = 0.38;
+  const cav = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({map:cavityTexture(cupX.map(x => (x + 0.4) / 0.8), cupZ.map(z => (z + 0.4) / 0.8), 0.055), metalness:0.6, roughness:0.4}));
+  cav.position.y = 0.151; cav.userData.casing = true; cav.userData.cutOp = 0.55; tiltG.add(cav);
+  const cupsG = grp(tiltG, 0, 0, 0), cupGeo = cupLathe(16);
+  cupX.forEach(x => cupZ.forEach(z => add(cupsG, cupGeo, M.pp, x, 0.058, z, true)));
+  // --- compressed air: receiver + pipe
+  g = m.part('air');
+  Cy(g, 0.2, 0.2, 0.7, M.light2, X0 - 1.0, 0.6, 1.15, 'y', 24);
+  const capG = new THREE.SphereGeometry(0.2, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+  add(g, capG, M.light2, X0 - 1.0, 0.95, 1.15);
+  const cb = add(g, capG, M.light2, X0 - 1.0, 0.25, 1.15); cb.rotation.x = Math.PI;
+  [[0.12, 0.12], [-0.12, 0.12], [0.12, -0.12], [-0.12, -0.12]].forEach(q => B(g, 0.04, 0.12, 0.04, M.dark, X0 - 1.0 + q[0], 0.06, 1.15 + q[1]));
+  Cy(g, 0.05, 0.05, 0.02, M.black, X0 - 1.0, 0.7, 1.36, 'z', 16);
+  T(g, [[X0 - 1.0, 1.12, 1.15], [X0 - 1.0, 2.3, 1.15], [X0 - 0.6, 2.42, 0.7], [X0 - 0.1, 2.36, 0.2], [X0, 2.29, 0.05]], 0.03, M.steel, 40);
+  const airG = grp(R, 0, 0, 0), airMat = M.fx.clone();
+  const cone = new THREE.ConeGeometry(0.035, 0.08, 10); cone.rotateX(Math.PI);
+  const shaft = new THREE.CylinderGeometry(0.01, 0.01, 0.12, 6);
+  [[-0.46, 0.25], [-0.46, -0.25], [0.46, 0.25], [0.46, -0.25]].forEach(q => { const a = grp(airG, X0 + q[0], 1.25, q[1]); add(a, cone, airMat, 0, -0.04, 0, true); add(a, shaft, airMat, 0, 0.06, 0, true); });
+  // --- horizontal cup stacker (2 levels x 4 lanes)
+  g = m.part('stacker');
+  [0.355, 0.755].forEach(y => { B(g, 1.5, 0.03, 0.82, M.light2, 1.7, y - 0.06, 0); cupZ.forEach(z => B(g, 1.5, 0.02, 0.01, M.dark, 1.7, y - 0.035, z + 0.1)); });
+  [[0.98, 0.4], [2.42, 0.4], [0.98, -0.4], [2.42, -0.4]].forEach(q => B(g, 0.04, 0.8, 0.04, M.dark, q[0], 0.4, q[1]));
+  const NL = 14, stack = new THREE.InstancedMesh(cupLathe(14), M.pp, NL * 8), o = new THREE.Object3D();
+  o.rotation.z = -Math.PI / 2;
+  for (let k = 0; k < NL; k++){ let j = 0; [0.4, 0.8].forEach(y => cupZ.forEach(z => { o.position.set(1.0 + k * 0.014, y, z); o.updateMatrix(); stack.setMatrixAt(k * 8 + j++, o.matrix); })); }
+  let layers = 5; stack.count = layers * 8; g.add(stack);
+  // --- operator panel
+  g = m.part('hmi');
+  hmiStand(g, -1.3, 1.15, 'ТЕРМОФОРМОВКА');
+  // --- animation (one cycle = 3.4 s)
+  let tt = 0, lastC = -1;
+  m.update = dt => {
+    tt += dt; const Tc = 3.4, c = Math.floor(tt / Tc), p = (tt % Tc) / Tc;
+    if (c !== lastC){ lastC = c; seg.material = upMat; layers = layers >= NL ? 4 : layers + 1; stack.count = layers * 8; }
+    const e = smooth((p - 0.8) / 0.2);
+    web.position.x = e * P;
+    upTex.offset.x = -(c + e) * P / 0.5;
+    skTex.offset.x = -(c + e);
+    if (p > 0.79) pins.userData.set(e * P);
+    const lift = p < 0.18 ? smooth(p / 0.18) : p < 0.36 ? 1 : p < 0.48 ? 1 - smooth((p - 0.36) / 0.12) : 0;
+    mouldLift.position.y = 0.595 + lift * 0.3;
+    plugMove.position.y = 1.5 - 0.35 * lift;
+    if (p >= 0.2) seg.material = segHoles;
+    const tl = p < 0.48 ? 0 : p < 0.6 ? smooth((p - 0.48) / 0.12) : p < 0.66 ? 1 : p < 0.8 ? 1 - smooth((p - 0.66) / 0.14) : 0;
+    tiltG.rotation.z = -tl * Math.PI / 2;
+    cupsG.visible = p >= 0.2 && p < 0.665;
+    cupsG.position.y = p < 0.58 ? 0 : smooth((p - 0.58) / 0.085) * 0.62;
+    const va = bump(p, 0.15, 0.4);
+    airMat.opacity = va * 0.95; airG.visible = va > 0.01;
+    airG.children.forEach(a => { a.position.y = 1.3 - ((tt * 0.5) % 0.12); });
+  };
+  cupsG.visible = false;
+  m.home = {dir:[0.25, 0.55, 1], fitW:7.2, fitH:2.6, target:[-0.3, 1.0, 0.2]};
+  return m;
+}
+/* ===================== registry, labels, selection, camera, loop ===================== */
+let ray = null, clock = null, curFly = null, selHelper = null, selMats = [], labelEls = {}, stageW = 1, stageH = 1, runT = 0, vTmp = null;
+const ANCH = {
+  line:{loader:[-4.55,2.72,0], hopper:[-4.3,1.95,0.2], extruder:[-5.2,1.5,0], heaters:[-3.52,1.42,0], screw:[-2.2,1.2,0.13], screen:[-1.4,1.45,0], pump:[-0.92,1.78,0.2], die:[-0.25,1.45,0], rolls:[0.3,1.72,0], tcu:[0.2,0.8,-1.45], conveyor:[2.2,0.82,0.72], gauge:[3.9,1.45,0], edge:[4.5,1.32,0], haul:[5.15,1.5,0], winder:[6.45,1.78,0], grinder:[4.85,1.15,1.75], hmi:[-2.6,1.62,1.35]},
+  vac:{unwinder:[-4.6,1.3,0], chains:[-3.2,1.04,0.47], heater_top:[-2.3,1.38,0], heater_bottom:[-2.3,0.66,0.5], mould:[0.45,0.82,0.1], table:[1.15,0.56,0.48], vacuum:[1.35,0.64,1.25], cooling:[0.7,1.72,0.2], cutter:[2.3,2.3,0], stacker:[3.55,1.25,1.05], skeleton:[4.15,0.95,0], hmi:[-1.3,1.62,1.25]},
+  thermo:{unwinder:[-3.2,1.25,0], chains:[-2.3,1.08,0.42], heaters:[-1.45,1.42,0], plug:[0.3,1.72,0.4], mould_tilt:[0.3,0.72,0.42], air:[-0.7,1.28,1.15], stacker:[1.7,0.95,0.42], hmi:[-1.3,1.52,1.15]}
+};
+const INSIDE = {line:['screw'], vac:['mould', 'table'], thermo:['mould_tilt']};
+function partBox(g){
+  const box = new THREE.Box3(), tmp = new THREE.Box3(), mx = new THREE.Matrix4();
+  g.updateMatrixWorld(true);
+  g.traverse(o => {
+    if (!o.isMesh) return;
+    const geo = o.geometry; if (!geo.boundingBox) geo.computeBoundingBox();
+    if (o.isInstancedMesh){ for (let i = 0; i < o.count; i++){ o.getMatrixAt(i, mx); mx.premultiply(o.matrixWorld); tmp.copy(geo.boundingBox).applyMatrix4(mx); box.union(tmp); } }
+    else { tmp.copy(geo.boundingBox).applyMatrix4(o.matrixWorld); box.union(tmp); }
+  });
+  return box;
+}
+function registerMachine(m){
+  m.root.updateMatrixWorld(true);
+  Object.keys(m.parts).forEach(pid => {
+    const g = m.parts[pid], map = new Map(), mats = [];
+    g.traverse(o => {
+      if (!o.isMesh) return;
+      o.userData.partId = pid; o.userData.mid = m.id;
+      let mt;
+      if (o.userData.casing) mt = o.material.clone();
+      else { mt = map.get(o.material); if (!mt){ mt = o.material.clone(); map.set(o.material, mt); } }
+      o.material = mt; if (mats.indexOf(mt) < 0) mats.push(mt);
+      m.pick.push(o);
+    });
+    mats.forEach(mt => { if (mt.emissive){ mt.userData.e0 = mt.emissive.clone(); mt.userData.ei0 = mt.emissiveIntensity; } });
+    g.userData.mats = mats;
+    m.boxes[pid] = partBox(g);
+  });
+  m.casings = [];
+  m.root.traverse(o => { if (o.isMesh && o.userData.casing){ m.casings.push(o); o.userData.op0 = o.material.opacity; o.userData.tr0 = o.material.transparent; } });
+}
+function anchorOf(mid, pid){
+  const a = ANCH[mid] && ANCH[mid][pid], r = MACH[mid].root.position;
+  if (a) return new THREE.Vector3(a[0] + r.x, a[1], a[2]);
+  const b = MACH[mid].boxes[pid];
+  return new THREE.Vector3((b.min.x + b.max.x) / 2, b.max.y + 0.06, (b.min.z + b.max.z) / 2);
+}
+function buildLabels(){
+  const box = $('labels'); box.innerHTML = ''; labelEls = {};
+  if (!MACH[S.m]) return;
+  partIds(S.m).forEach(pid => {
+    if (!MACH[S.m].boxes[pid]) return;
+    const el = document.createElement('div'); el.className = 'lbl' + (S.sel === pid ? ' sel' : ''); el.hidden = true;
+    el.innerHTML = '<i></i><span></span>'; el.lastChild.textContent = partName(S.m, pid);
+    el.addEventListener('click', ev => { ev.stopPropagation(); selectPart(pid, false); });
+    box.appendChild(el);
+    labelEls[pid] = {el, a:anchorOf(S.m, pid)};
+  });
+}
+function updateLabels(){
+  if (!S.labels) return;
+  const placed = [], keys = Object.keys(labelEls);
+  if (S.sel && labelEls[S.sel]){ keys.splice(keys.indexOf(S.sel), 1); keys.unshift(S.sel); }
+  for (const pid of keys){
+    const L = labelEls[pid]; vTmp.copy(L.a).project(camera);
+    const vis = vTmp.z < 1 && vTmp.x > -1.05 && vTmp.x < 1.05 && vTmp.y > -1.05 && vTmp.y < 1.05;
+    if (!vis){ if (!L.el.hidden) L.el.hidden = true; continue; }
+    let x = (vTmp.x + 1) / 2 * stageW - 6; const y = (1 - vTmp.y) / 2 * stageH - 6;
+    if (!L.w){ L.el.hidden = false; L.w = L.el.offsetWidth || 0; }
+    const flip = x + (L.w || 90) > stageW - 4;
+    if (flip) x = x - (L.w || 90) + 12;
+    if (L.flip !== flip){ L.flip = flip; L.el.classList.toggle('flip', flip); }
+    const r = [x - 2, y - 2, x + (L.w || 90) + 2, y + 16];
+    const clash = placed.some(q => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1]);
+    if (clash){ if (!L.el.hidden) L.el.hidden = true; continue; }
+    placed.push(r);
+    if (L.el.hidden) L.el.hidden = false;
+    L.el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+  }
+}
+function isNarrow(){ return window.innerWidth < 900; }
+function selectPart(pid, fromList){
+  selMats.forEach(mt => { if (mt.userData.e0){ mt.emissive.copy(mt.userData.e0); mt.emissiveIntensity = mt.userData.ei0; } });
+  selMats = [];
+  if (selHelper){ scene.remove(selHelper); selHelper = null; }
+  for (const k in labelEls) labelEls[k].el.classList.remove('sel');
+  S.sel = pid && DEF[S.m].names[pid] ? pid : null;
+  showCard(S.sel); markPanelSel();
+  const m = MACH[S.m];
+  if (!S.sel || !m || !scene) return;
+  const g = m.parts[S.sel];
+  if (!S.cut && INSIDE[S.m] && INSIDE[S.m].indexOf(S.sel) >= 0){ S.cut = true; applyCut(); syncTools(); }
+  selMats = g ? g.userData.mats.filter(mt => mt.userData.e0) : [];
+  const b = m.boxes[S.sel];
+  if (b){
+    selHelper = new THREE.Box3Helper(b.clone().expandByScalar(0.03), 0x22d3ee);
+    selHelper.material.depthTest = false; selHelper.material.transparent = true; selHelper.material.opacity = 0.9; selHelper.renderOrder = 999;
+    scene.add(selHelper); flyToBox(b);
+  }
+  if (labelEls[S.sel]) labelEls[S.sel].el.classList.add('sel');
+  if (fromList && isNarrow()){ const r = $('stage').getBoundingClientRect(); if (r.top < -40 || r.bottom > window.innerHeight + 40) $('stage').scrollIntoView({behavior:reduceMotion ? 'auto' : 'smooth', block:'start'}); }
+}
+function flyTo(t, p, dur){ curFly = {t:0, dur:reduceMotion ? 0.01 : (dur || 0.9), t0:controls.target.clone(), p0:camera.position.clone(), t1:t.clone(), p1:p.clone()}; }
+function flyToBox(b){
+  const c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3());
+  const rad = Math.max(0.3, s.length() / 2);
+  const vf = camera.fov * Math.PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
+  const dist = Math.min(Math.max(rad / Math.sin(Math.min(vf, hf) / 2) * 1.6, 1.8), 16);
+  const cur = camera.position.clone().sub(controls.target).normalize(), zs = cur.z < -0.2 ? -1 : 1;
+  const dir = new THREE.Vector3(cur.x * 0.7, 0.3, zs * Math.max(0.6, Math.abs(cur.z))).normalize();
+  const t = c.clone(); if (isNarrow()) t.y -= dist * 0.14;
+  flyTo(t, c.clone().addScaledVector(dir, dist));
+}
+function homeView(mid){
+  const m = MACH[mid], h = m.home, rx = m.root.position.x;
+  const t = new THREE.Vector3(h.target[0] + rx, h.target[1], h.target[2]);
+  const dir = new THREE.Vector3(h.dir[0] + (camera.aspect < 1.1 ? 0.75 : 0), h.dir[1], h.dir[2]).normalize();
+  if (!m.fitBox) m.fitBox = partBox(m.root);
+  const b = m.fitBox, cs = [];
+  for (let i = 0; i < 8; i++) cs.push(new THREE.Vector3(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z));
+  const cam = camera.clone(), vf = camera.fov * Math.PI / 180, rt = new THREE.Vector3(), up = new THREE.Vector3();
+  let d = 30;
+  for (let it = 0; it < 7; it++){
+    cam.position.copy(t).addScaledVector(dir, d); cam.lookAt(t); cam.updateMatrixWorld(true);
+    let x0 = 9, x1 = -9, y0 = 9, y1 = -9;
+    cs.forEach(c => { vTmp.copy(c).project(cam); x0 = Math.min(x0, vTmp.x); x1 = Math.max(x1, vTmp.x); y0 = Math.min(y0, vTmp.y); y1 = Math.max(y1, vTmp.y); });
+    const hh = d * Math.tan(vf / 2), hw = hh * cam.aspect;
+    rt.setFromMatrixColumn(cam.matrixWorld, 0); up.setFromMatrixColumn(cam.matrixWorld, 1);
+    t.addScaledVector(rt, (x0 + x1) / 2 * hw).addScaledVector(up, ((y0 + y1) / 2 + 0.06) * hh);
+    d = Math.min(60, Math.max(2, d * Math.max((x1 - x0) / 2, (y1 - y0) / 2, 0.05) / 0.92));
+  }
+  return {t, p:t.clone().addScaledVector(dir, d)};
+}
+function flyHome(){ const v = homeView(S.m); flyTo(v.t, v.p, 1.1); }
+function setMachine(mid){
+  if (!DEF[mid]) return;
+  S.m = mid;
+  renderHead(); renderBody();
+  if (!scene){ showCard(null); return; }
+  selectPart(null);
+  buildLabels();
+  const rx = MACH[mid].root.position.x;
+  sun.position.set(rx - 4, 11, 7); sun.target.position.set(rx, 0, 0);
+  flyHome();
+}
+function applyCut(){
+  Object.keys(MACH).forEach(k => MACH[k].casings.forEach(o => {
+    const mt = o.material;
+    if (S.cut){ mt.transparent = true; mt.opacity = o.userData.cutOp || (o.userData.glow ? 0.35 : 0.14); mt.depthWrite = false; }
+    else { mt.transparent = o.userData.tr0; mt.opacity = o.userData.op0; mt.depthWrite = true; }
+    mt.needsUpdate = true; o.castShadow = !S.cut;
+  }));
+}
+function resize(){
+  const st = $('stage'), w = st.clientWidth, h = st.clientHeight;
+  if (!w || !h) return;
+  stageW = w; stageH = h;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+function bindPick(){
+  const cv = renderer.domElement; let down = null;
+  cv.addEventListener('pointerdown', e => { down = {x:e.clientX, y:e.clientY, t:performance.now()}; });
+  cv.addEventListener('pointerup', e => {
+    if (!down) return;
+    const dx = e.clientX - down.x, dy = e.clientY - down.y, ms = performance.now() - down.t; down = null;
+    if (dx * dx + dy * dy > 49 || ms > 650) return;
+    const r = cv.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+    let list = [];
+    Object.keys(MACH).forEach(k => { list = list.concat(MACH[k].pick); });
+    if (S.cut) list = list.filter(o => !o.userData.casing);
+    const hit = ray.intersectObjects(list, false)[0];
+    if (!hit){ selectPart(null); return; }
+    const mid = hit.object.userData.mid, pid = hit.object.userData.partId;
+    if (mid !== S.m){ setMachine(mid); }
+    selectPart(pid, false);
+  });
+  controls.addEventListener('start', () => { curFly = null; });
+}
+function showErr(msg){ const d = document.createElement('div'); d.className = 'err'; d.textContent = msg; $('stage').appendChild(d); }
+function loop(){
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05), now = clock.elapsedTime;
+  if (S.running){ runT += dt; for (const k in MACH) MACH[k].update(dt, runT); }
+  if (curFly){ curFly.t += dt; const k = smooth(curFly.t / curFly.dur); controls.target.lerpVectors(curFly.t0, curFly.t1, k); camera.position.lerpVectors(curFly.p0, curFly.p1, k); if (curFly.t >= curFly.dur) curFly = null; }
+  if (selMats.length){ const k = 0.4 + 0.35 * Math.sin(now * 5); selMats.forEach(mt => { mt.emissive.copy(mt.userData.e0).lerp(HL, k); mt.emissiveIntensity = Math.max(mt.userData.ei0, 0.9); }); }
+  controls.update();
+  renderer.render(scene, camera);
+  updateLabels();
+}
+function main(){
+  bindUI(); syncTools(); renderHead(); renderTabs(); renderBody();
+  if (!window.THREE || !THREE.OrbitControls){ showErr('Не загрузилась 3D-библиотека (three.js). Текстовые разделы работают.'); return; }
+  try {
+    HL = new THREE.Color(0x22d3ee); ray = new THREE.Raycaster(); vTmp = new THREE.Vector3();
+    initCore();
+    buildLine(); buildVac(); buildThermo();
+    Object.keys(MACH).forEach(k => registerMachine(MACH[k]));
+    MACH.vac.update(1.6, 0); MACH.vac.update(1.28, 0); MACH.thermo.update(1.7, 0); MACH.line.update(0.01, 0);
+    resize();
+    if (window.ResizeObserver) new ResizeObserver(resize).observe($('stage')); else window.addEventListener('resize', resize);
+    bindPick();
+    const v = homeView('line'); camera.position.copy(v.p); controls.target.copy(v.t); controls.update();
+    sun.position.set(-4, 11, 7); sun.target.position.set(0, 0, 0);
+    buildLabels();
+    clock = new THREE.Clock();
+    window.chaif3d = {info: () => ({tris: renderer.info.render.triangles, calls: renderer.info.render.calls, geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures}),
+      view: () => { const m = MACH[S.m], b = m.fitBox, out = []; if (b) for (let i = 0; i < 8; i++){ const v = new THREE.Vector3(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(camera); out.push([+v.x.toFixed(2), +v.y.toFixed(2)]); }
+        return {cam: camera.position.toArray().map(x => +x.toFixed(2)), tgt: controls.target.toArray().map(x => +x.toFixed(2)), aspect: +camera.aspect.toFixed(3), box: b && [b.min.toArray(), b.max.toArray()], ndc: out}; }};
+    loop();
+  } catch(err){ console.error(err); showErr('3D не запустился: ' + (err && err.message || err)); }
+}
+main();
+})();
+</script>
